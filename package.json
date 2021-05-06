@@ -1,0 +1,19 @@
+{
+  "name": "gradebooktt",
+  "version": "1.0.0",
+  "description": "",
+  "main": "main.py",
+  "scripts": {
+    "test": "python main.py"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Boldoosang/gradebookTT.git"
+  },
+  "author": "Justin Baldeosingh",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Boldoosang/gradebookTT/issues"
+  },
+  "homepage": "https://github.com/Boldoosang/gradebookTT#readme"
+}
