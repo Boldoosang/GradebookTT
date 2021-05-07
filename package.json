@@ -4,7 +4,7 @@
   "description": "",
   "main": "main.py",
   "scripts": {
-    "test": "python main.py"
+    "serve": "python manage.py serve"
   },
   "repository": {
     "type": "git",

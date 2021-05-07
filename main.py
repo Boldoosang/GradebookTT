@@ -8,7 +8,13 @@ from models import db, User, UserSemester, UserCourse, University
 
 def create_app():
     app = Flask(__name__)
-    app.config.from_object('config.dev')
+    try:
+        app.config.from_object('config.dev')
+    except:
+        app.config['ENV'] = os.environ.get("ENV", default="")
+        app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("DBURI")
+        app.config["JWT_SECRET_KEY"] = os.environ.get("JWT_SECRET_KEY")
+
     db.init_app(app)
     return app
 
@@ -25,11 +31,6 @@ jwt = JWTManager(app)
 def user_lookup_callback(_jwt_header, jwt_data):
     identity = jwt_data["sub"]
     return User.query.filter_by(username=identity).one_or_none()
-
-@app.route("/", methods=["GET"])
-def homepage():
-    return "Hello World!"
-
 
 @app.route("/login", methods=["POST"])
 def login():
@@ -176,7 +177,3 @@ def addCourse(userSemesterID):
             return json.dumps({"message" : "Successfully added course to semester!"})
 
     return json.dumps({"error" : "Unable to add course to semester!"})
-
-if __name__ == "__main__":
-    print('Application running in ' + app.config['ENV'] + ' mode!')
-    app.run(host='0.0.0.0', port = 8080, debug = app.config['ENV']=='development')
