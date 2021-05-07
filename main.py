@@ -1,10 +1,10 @@
 from flask import Flask, request
-from flask_jwt_extended import create_access_token, get_jwt_identity, jwt_required, JWTManager
+from flask_jwt_extended import create_access_token, get_jwt_identity, jwt_required, JWTManager, current_user
 from sqlalchemy.exc import IntegrityError, OperationalError
 import os
 import json
 
-from models import db, User
+from models import db, User, UserSemester, UserCourse, University
 
 def create_app():
     app = Flask(__name__)
@@ -15,6 +15,16 @@ def create_app():
 app = create_app()
 app.app_context().push()
 jwt = JWTManager(app)
+
+
+# Register a callback function that loades a user from your database whenever
+# a protected route is accessed. This should return any python object on a
+# successful lookup, or None if the lookup failed for any reason (for example
+# if the user has been deleted from the database).
+@jwt.user_lookup_loader
+def user_lookup_callback(_jwt_header, jwt_data):
+    identity = jwt_data["sub"]
+    return User.query.filter_by(username=identity).one_or_none()
 
 @app.route("/", methods=["GET"])
 def homepage():
@@ -59,7 +69,7 @@ def register():
                 newUser = User(filteredUsername, registrationData["password"])
                 db.session.add(newUser)
                 db.session.commit()
-                return json.dumps({"msg" : "Sucesssfully registered!"})
+                return json.dumps({"message" : "Sucesssfully registered!"})
             except IntegrityError:
                 db.session.rollback()
                 return json.dumps({"error" : "This user already exists!"})
@@ -74,7 +84,80 @@ def register():
 @app.route("/identify", methods=["GET"])
 @jwt_required()
 def identify():
-    return json.dumps(get_jwt_identity())
+    if current_user:
+        return json.dumps({"username" : current_user.username})
+    
+    return json.dumps({"error" : "User is not logged in!"})
+
+
+@app.route("/api/semesters", methods=["GET"])
+@jwt_required()
+def getUserSemesters():
+    userSemesters = db.session.query(UserSemester).filter_by(userID = current_user.userID).all()
+
+    if userSemesters:
+        return json.dumps([userSemester.toDict() for userSemester in userSemesters])
+    
+    return json.dumps({"error" : "No enrolled semesters found for user!"})
+
+@app.route("/api/semesters", methods=["POST"])
+@jwt_required()
+def enrollSemester():
+    semesterDetails = request.get_json()
+
+    if not semesterDetails:
+        return json.dumps({"error" : "Invalid semester details supplied!"})
+
+    if "semesterYear" in semesterDetails and "semesterTerm" in semesterDetails:
+        outcome = current_user.enrollSemester(semesterYear = semesterDetails["semesterYear"], semesterTerm = semesterDetails["semesterTerm"])
+        if outcome:
+            return json.dumps({"message" : "Successfully enrolled in semester!"})
+
+    return json.dumps({"error" : "Unable to enroll in semester!"})
+
+
+@app.route("/api/semesters", methods=["DELETE"])
+@jwt_required()
+def unenrollSemester():
+    semesterDetails = request.get_json()
+
+    if not semesterDetails:
+        return json.dumps({"error" : "Invalid semester details supplied!"})
+
+    if "semesterYear" in semesterDetails and "semesterTerm" in semesterDetails:
+        outcome = current_user.unenrollSemester(semesterYear = semesterDetails["semesterYear"], semesterTerm = semesterDetails["semesterTerm"])
+        if outcome:
+            return json.dumps({"message" : "Successfully unenrolled from semester!"})
+
+    return json.dumps({"error" : "Unable to unenroll from semester!"})
+
+@app.route("/api/courses", methods=["POST"])
+@jwt_required()
+def addCourse():
+    courseDetails = request.get_json()
+
+    if not courseDetails:
+        return json.dumps({"error" : "Invalid course details supplied!"})
+
+
+    if "courseCode" in courseDetails and "courseName" in courseDetails and "userSemesterID" in courseDetails:
+        foundSemester = db.session.query(UserSemester).filter_by(userID=current_user.userID, userSemesterID=courseDetails["userSemesterID"]).first()
+
+        outcome = False
+
+        foundCourse = db.session.query(UserCourse).filter_by(userSemesterID = foundSemester.userSemesterID, courseCode = courseDetails["courseCode"]).first()
+
+        if foundCourse:
+            return json.dumps({"error" : "Course already exists for this semester!"})
+        
+        if foundSemester: 
+            print(courseDetails)
+            outcome = foundSemester.addCourse(courseCode = courseDetails["courseCode"], courseName = courseDetails["courseName"], credits = courseDetails["credits"], towardsSemesterGPA = courseDetails["towardsSemesterGPA"])
+
+        if outcome:
+            return json.dumps({"message" : "Successfully added course to semester!"})
+
+    return json.dumps({"error" : "Unable to add course to semester!"})
 
 if __name__ == "__main__":
     print('Application running in ' + app.config['ENV'] + ' mode!')
