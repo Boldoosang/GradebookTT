@@ -131,28 +131,46 @@ def unenrollSemester():
 
     return json.dumps({"error" : "Unable to unenroll from semester!"})
 
-@app.route("/api/courses", methods=["POST"])
+
+@app.route("/api/semester/<userSemesterID>/courses", methods=["GET"])
 @jwt_required()
-def addCourse():
+def viewSemesterCourses(userSemesterID):
+    if userSemesterID:
+        foundSemester = db.session.query(UserSemester).filter_by(userID=current_user.userID, userSemesterID=userSemesterID).first()
+
+        if not foundSemester:
+            return json.dumps({"error" : "Semester not found!"})
+
+        foundCourses = foundSemester.userCourses.filter_by(userSemesterID = foundSemester.userSemesterID).all()
+
+        if not foundCourses:
+            return json.dumps({"error" : "User is not enrolled in any courses for this semester!"})
+        
+        return json.dumps([foundCourse.toDict() for foundCourse in foundCourses])
+
+    return json.dumps({"error" : "Unable to add course to semester!"})
+
+@app.route("/api/semester/<userSemesterID>/courses", methods=["POST"])
+@jwt_required()
+def addCourse(userSemesterID):
     courseDetails = request.get_json()
 
     if not courseDetails:
         return json.dumps({"error" : "Invalid course details supplied!"})
 
 
-    if "courseCode" in courseDetails and "courseName" in courseDetails and "userSemesterID" in courseDetails:
-        foundSemester = db.session.query(UserSemester).filter_by(userID=current_user.userID, userSemesterID=courseDetails["userSemesterID"]).first()
+    if "courseCode" in courseDetails and "courseName" in courseDetails:
+        foundSemester = db.session.query(UserSemester).filter_by(userID=current_user.userID, userSemesterID=userSemesterID).first()
 
-        outcome = False
+        if not foundSemester:
+            return json.dumps({"error" : "Semester not found!"})
 
-        foundCourse = db.session.query(UserCourse).filter_by(userSemesterID = foundSemester.userSemesterID, courseCode = courseDetails["courseCode"]).first()
+        foundCourse = foundSemester.userCourses.filter_by(userSemesterID = foundSemester.userSemesterID, courseCode = courseDetails["courseCode"]).first()
 
         if foundCourse:
             return json.dumps({"error" : "Course already exists for this semester!"})
         
-        if foundSemester: 
-            print(courseDetails)
-            outcome = foundSemester.addCourse(courseCode = courseDetails["courseCode"], courseName = courseDetails["courseName"], credits = courseDetails["credits"], towardsSemesterGPA = courseDetails["towardsSemesterGPA"])
+        outcome = foundSemester.addCourse(courseCode = courseDetails["courseCode"], courseName = courseDetails["courseName"], credits = courseDetails["credits"], towardsSemesterGPA = courseDetails["towardsSemesterGPA"])
 
         if outcome:
             return json.dumps({"message" : "Successfully added course to semester!"})
