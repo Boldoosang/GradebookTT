@@ -1,5 +1,5 @@
 from main import app
-from models import db, User, UserCourse
+from models import db, User, UserCourse, UserSemester, Mark
 import os
 
 os.remove("gradebookTT.db")
@@ -11,14 +11,14 @@ db.session.add(user1)
 db.session.commit()
 
 user1.enrollSemester("2020/2021", "Semester_2")
+studentSemester = db.session.query(UserSemester).filter_by(userID = user1.userID).first()
 
-COMP2609 = UserCourse(courseCode="COMP2609", courseName="Test Course", credits=3, userSemesterID=1)
-db.session.add(COMP2609)
-db.session.commit()
+studentSemester.addCourse("COMP 2609", "Independent Programming")
 
-print(COMP2609.toDict())
+COMP2609 = db.session.query(UserCourse).first()
+COMP2609.addMark(component="CW Exam 1", totalMark = 50, weighting = 10, receivedMark=None)
+COMP2609.updateMark(markID=1, receivedMark=45)
 
-
-
+COMP2609.updateOverallMarks()
 
 print("Database has been initialized!")

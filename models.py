@@ -72,6 +72,7 @@ class UserSemester(db.Model):
     userID = db.Column(db.Integer, db.ForeignKey("user.userID"), nullable = False)
     semesterYear = db.Column(db.String(16), nullable = False)
     semesterTerm = db.Column(db.String(16), nullable = False)
+    userCourses = db.relationship("UserCourse", backref="semester", lazy="dynamic")
 
     def toDict(self):
         return {
@@ -81,29 +82,92 @@ class UserSemester(db.Model):
             "semesterTerm" : self.semesterTerm
         }
 
+    def addCourse(self, courseCode, courseName, credits = 3, towardsSemesterGPA = True):
+        newCourse = UserCourse(userSemesterID = self.userSemesterID, courseCode = courseCode, courseName = courseName, credits = credits, towardsSemesterGPA = towardsSemesterGPA)
+
+        try:
+            db.session.add(newCourse)
+            db.session.commit()
+            print("Course successfully added!")
+            return True
+        except:
+            db.session.rollback()
+            print("Unable to add course to database!")
+            return False
+
+    def removeCourse(self, userCourseID):
+        foundCourse = self.userCourses.filter_by(userCourseID = userCourseID).first()
+
+        if not foundCourse:
+            print("Course does not exist!")
+            return False
+        
+        try:
+            db.session.delete(foundCourse)
+            db.session.commit()
+            print("Course successfully deleted!")
+            return True
+        except:
+            db.session.rollback()
+            print("Unable to remove course from database!")
+            return False
+
+    def updateCourse(self, userCourseID, courseCode = None, courseName = None, credits = None, towardsSemesterGPA = None):
+        matchingCourse = self.userCourses.filter_by(userCourseID=userCourseID).first()
+
+        if not matchingCourse:
+            print("No matching course found!")
+            return False
+
+        
+        if courseCode:
+            matchingCourse.courseCode = courseCode
+        
+        if courseName:
+            matchingCourse.courseName = courseName
+        
+        if credits:
+            matchingCourse.credits = credits
+        
+        if towardsSemesterGPA:
+            mathcingCourse.towardsSemesterGPA = towardsSemesterGPA
+
+        try:
+            db.session.add(matchingCourse)
+            db.session.commit()
+            print("Course updated!")
+            return True
+        except:
+            db.session.rollback()
+            print("Unable to update course!")
+            return False
+
 class UserCourse(db.Model):
-    courseCode = db.Column(db.String(16), primary_key = True)
+    userCourseID = db.Column(db.Integer, primary_key = True)
+    courseCode = db.Column(db.String(16), nullable = False)
     courseName = db.Column(db.String(64), nullable = False)
-    credits = db.Column(db.Integer, nullable = False)
+    credits = db.Column(db.Integer, nullable = False, default=3)
     overallMark = db.Column(db.Float, nullable = True)
-    overallGrade = db.Column(db.String(5), nullable = True)
     towardsSemesterGPA = db.Column(db.Boolean, default=True, nullable = False)
     userSemesterID = db.Column(db.Integer, db.ForeignKey("user_semester.userSemesterID"), nullable = False)
-    marks = db.relationship("Mark", backref = "userCourse", uselist = False)
+    marks = db.relationship("Mark", backref = "userCourse", lazy="dynamic")
 
 
     def toDict(self):
         return {
+            "userCourseID" : self.userCourseID,
             "courseCode" : self.courseCode,
             "courseName" : self.courseName,
             "credits" : self.credits,
+            "overallMark" : self.overallMark,
+            "towardsSemesterGPA" : self.towardsSemesterGPA,
             "userSemesterID" : self.userSemesterID,
-            "marks" : self.marks
+            "marks" : None if not self.marks else [mark.toDict() for mark in self.marks]
         }
 
-    def addMark(self, courseCode, component, receivedMark=None, totalMark, weighting):
+    def addMark(self, component, totalMark, weighting, receivedMark=None):
         try:
-            newMark = Mark(courseCode=courseCode, component=component, receivedMark=receivedMark, totalMark=totalMark, weighting=weighting)
+            newMark = Mark(userCourseID=self.userCourseID, component=component, receivedMark=receivedMark, totalMark=totalMark, weighting=weighting)
             db.session.add(newMark)
             db.session.commit()
             print("Added mark to course!")
@@ -113,9 +177,80 @@ class UserCourse(db.Model):
             print("Unable to add mark to course!")
             return False
 
+    def updateMark(self, markID, component = None, totalMark = None, weighting = None, receivedMark=None):
+        foundMark = self.marks.filter_by(userCourseID=self.userCourseID, markID=markID).first()
+            
+        if not foundMark:
+            print("No mark found!")
+            return False
+
+        try:
+            if component:
+                foundMark.component = component
+            
+            if totalMark:
+                foundMark.totalMark = totalMark
+            
+            if weighting:
+                foundMark.weighting = weighting
+            
+            if receivedMark:
+                foundMark.receivedMark = receivedMark
+
+            db.session.add(foundMark)
+            db.session.commit()
+            print("Updated mark in course!")
+            return True
+        except:
+            db.session.rollback()
+            print("Unable to update mark in course!")
+            return False
+
+    def removeMark(self, markID):
+        foundMark = self.marks.filter_by(userCourseID=self.userCourseID, markID=markID).first()
+
+        if not foundMark:
+            print("Mark not found!")
+            return False
+
+        try:
+            db.session.delete(foundMark)
+            db.session.commit()
+            print("Removed mark from course!")
+            return True
+        except:
+            db.session.rollback()
+            print("Unable to remove mark from course!")
+            return False
+
+    def updateOverallMarks(self):
+        courseMarks = self.marks.filter_by().all()
+
+        if not courseMarks:
+            print("No course marks found for this course!")
+            return False
+
+        overallMark = 0
+        for courseMark in courseMarks:
+            if courseMark:
+                mark = courseMark.calculateWeightedMark()
+                if mark:
+                    overallMark += mark
+    
+        try:
+            self.overallMark = overallMark
+            db.session.add(self)
+            print("Overall marks updated for course!")
+            db.session.commit()
+        except:
+            print("Unable to update course marks!")
+            db.session.rollback()
+            return False
+        
+        
 class Mark(db.Model):
     markID = db.Column(db.Integer, primary_key=True)
-    courseCode = db.Column(db.String(16), db.ForeignKey("user_course.courseCode"), nullable = False)
+    userCourseID = db.Column(db.String(16), db.ForeignKey("user_course.userCourseID"), nullable = False)
     component = db.Column(db.String(64), nullable = False)
     receivedMark = db.Column(db.Float, nullable = True)
     totalMark = db.Column(db.Float, nullable = False)
@@ -124,12 +259,20 @@ class Mark(db.Model):
     def toDict(self):
         return {
             "markID" : self.markID,
-            "courseCode" : self.courseCode,
-            "componenet" : self.component,
+            "userCourseID" : self.userCourseID,
+            "component" : self.component,
             "receivedMark" : self.receivedMark,
             "totalMark" : self.totalMark,
+            "weightedMark" : self.calculateWeightedMark(),
             "weighting" : self.weighting
         }
+
+    def calculateWeightedMark(self):
+        if not self.receivedMark:
+            return None
+        
+        return (self.receivedMark/self.totalMark)*self.weighting
+
 
 
 class University(db.Model):
