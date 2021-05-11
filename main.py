@@ -90,6 +90,17 @@ def identify():
     
     return json.dumps({"error" : "User is not logged in!"})
 
+@app.route('/favicon.ico')
+def favicon():
+    return app.send_static_file('images/favicon.png')
+
+@app.route('/logo.png')
+def logo():
+    return app.send_static_file('images/logo.png')
+
+@app.route("/web", methods=["GET"])
+def homepage():
+    return app.send_static_file("index.html")
 
 @app.route("/api/semesters", methods=["GET"])
 @jwt_required()
