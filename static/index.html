@@ -65,7 +65,28 @@
                                 </div>
                             </form>
                         </div>
-                        <div class="tab-pane fade" id="nav-register" role="tabpanel">Registration stuff</div>
+                        <div class="tab-pane fade" id="nav-register" role="tabpanel">
+                            <form onsubmit="register(event)">
+                                <div class="mb-3">
+                                  <label for="registrationUsername" class="form-label">Username</label>
+                                  <input type="text" class="form-control" name="username" id="registrationUsername" minlength="6" required>
+                                </div>
+
+                                <div class="mb-3">
+                                  <label for="registrationPassword" class="form-label">Password</label>
+                                  <input type="password" class="form-control" name="password" id="registrationPassword" minlength="6" required>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="registrationPassword" class="form-label">Confirm Password</label>
+                                    <input type="password" class="form-control" name="confirmPassword" id="registrationConfirmPassword" minlength="6" required>
+                                </div>
+
+                                <div class="userActionSubmit">
+                                    <button type="submit" class="float-end my-2 px-3 btn btn-primary">Register</button>
+                                </div>
+                            </form>
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer mb-0" id="userActionMessage">

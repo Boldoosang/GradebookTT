@@ -89,20 +89,41 @@ async function identifyUser(){
                                     <a class="nav-link" id="mainTab-contact-tab" data-bs-toggle="pill" data-bs-target="#mainTab-contact" type="button" role="tab">Contact</a>
                                 </li>`
         welcomeBanner.innerHTML = ` <h1 class="display-4">Welcome back, ${user["username"]}!</h1>
-                                    <p class="lead">This is a simple hero unit, a simple jumbotron-style component for calling extra attention to featured content or information.</p>
+                                    <p class="lead">As a logged in user, you are able to enroll within a semester, add courses to the semester, and add marks for the enrolled courses. The semester GPA and grades will be automatically calculated from the presented course marks.</p>
                                     <hr class="my-4">
-                                    <p>It uses utility classes for typography and spacing to space content out within the larger container.</p>
-                                    <p class="lead">
                                     <a class="btn btn-primary btn-lg" href="#" role="button">Learn more</a>`
     } else {
         userStateArea.innerHTML = `<a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#userStateAction">Login/Register</a>`
         mainTabArea.innerHTML = ``
         welcomeBanner.innerHTML = ` <h1 class="display-4">Not logged in!</h1>
-                                    <p class="lead">This is a simple hero unit, a simple jumbotron-style component for calling extra attention to featured content or information.</p>
+                                    <p class="lead">Please log in to continue using the application. If you do not have an account, feel free to make one using the provided button.</p>
+                                    <p class="lead">GradebookTT is an application designed to help students keep track of their semester marks and respective GPAs for that semester. It provides the necessary tools for students to enroll in a semester, add their semester courses, and add the attained marks for their semester courses. Calculations will be automatically performed by the system to determine the student's performance and grades.</p>
                                     <hr class="my-4">
-                                    <p>It uses utility classes for typography and spacing to space content out within the larger container.</p>
-                                    <p class="lead">
-                                    <a class="btn btn-success btn-lg" data-bs-toggle="modal" data-bs-target="#userStateAction">Login/Register</a>`
+                                    <a class="btn btn-primary btn-lg mb-3" data-bs-toggle="modal" data-bs-target="#userStateAction">Login/Register</a>`
+    }
+
+}
+
+async function register(event){
+    event.preventDefault();
+
+    let form = event.target;
+
+    let registrationDetails = {
+        "username" : form.elements["username"].value,
+        "password" : form.elements["password"].value,
+        "confirmPassword" : form.elements["confirmPassword"].value
+    }
+
+    form.reset();
+
+    let result = await sendRequest("/register", "POST", registrationDetails);
+    let messageArea = document.querySelector("#userActionMessage")
+
+    if("error" in result){
+        messageArea.innerHTML = `<b class="text-danger text-center">${result["error"]}</b>`
+    } else {
+        messageArea.innerHTML = `<b class="text-success text-center">Registration successful!</b>`
     }
 
 }

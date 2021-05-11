@@ -57,7 +57,7 @@ def register():
     if registrationData:
         if "username" in registrationData and "password" in registrationData and "confirmPassword" in registrationData:
             filteredUsername = registrationData["username"].replace(" ", "")
-            if len(filteredUsername) < 5:
+            if len(filteredUsername) < 6:
                 return json.dumps({"error" : "Username too short!"})
             
             if registrationData["password"] != registrationData["confirmPassword"]:
