@@ -48,7 +48,6 @@ def login():
                 return json.dumps({"access_token" : access_token})
 
     return json.dumps({"error" : "Invalid login details supplied!"})
-    
 
 @app.route("/register", methods=["POST"])
 def register():
@@ -82,11 +81,41 @@ def register():
 
     return json.dumps({"error" : "Invalid registration details supplied!"})
 
+@app.route("/profile/password", methods=["PUT"])
+@jwt_required()
+def changePassword():
+    newPasswordDetails = request.get_json()
+
+    if newPasswordDetails:
+        if "oldPassword" in newPasswordDetails and "password" in newPasswordDetails and "confirmPassword" in newPasswordDetails:
+            if not current_user.checkPassword(newPasswordDetails["oldPassword"]):
+                return json.dumps({"error" : "The original password you have entered is incorrect!"})
+
+            if newPasswordDetails["password"] != newPasswordDetails["confirmPassword"]:
+                return json.dumps({"error" : "Passwords do not match!"})
+            
+            if len(newPasswordDetails["password"]) < 6:
+                return json.dumps({"error" : "Password is too short!"})
+
+            try:
+                current_user.setPassword(newPasswordDetails["password"])
+                db.session.add(current_user)
+                db.session.commit()
+                return json.dumps({"message" : "Sucesssfully changed password!"})
+            except OperationalError:
+                print("Database not initialized!")
+                return json.dumps({"error" : "Database has not been initialized! Please contact the administrator of the application!"})
+            except:
+                return json.dumps({"error" : "An unknown error has occurred!"})
+
+    return json.dumps({"error" : "Invalid password details supplied!"})
+
+
 @app.route("/identify", methods=["GET"])
 @jwt_required()
 def identify():
     if current_user:
-        return json.dumps({"username" : current_user.username})
+        return json.dumps({"username" : current_user.username, "universityName" : current_user.enrolledUniversity})
     
     return json.dumps({"error" : "User is not logged in!"})
 
@@ -188,3 +217,21 @@ def addCourse(userSemesterID):
             return json.dumps({"message" : "Successfully added course to semester!"})
 
     return json.dumps({"error" : "Unable to add course to semester!"})
+
+
+@app.route("/profile/university", methods=["PUT"])
+@jwt_required()
+def updateUniversity():
+    universityDetails = request.get_json()
+
+    if not universityDetails:
+        return json.dumps({"error" : "Invalid university details supplied!"})
+
+
+    if "universityName" in universityDetails:
+        outcome = current_user.updateUniversity(universityName=universityDetails["universityName"])
+
+        if outcome:
+            return json.dumps({"message" : "Successfully updated university!"})
+
+    return json.dumps({"error" : "Unable to update university!"})

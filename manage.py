@@ -1,6 +1,7 @@
 from flask_script import Manager
 from main import app
 from models import db
+import os
 
 manager = Manager(app)
 
@@ -8,7 +9,11 @@ from models import *
 
 @manager.command
 def initDB():
+    os.remove("gradebookTT.db")
     db.create_all(app=app)
+    UWI = University(universityName="University of the West Indies", universityLogo=None)
+    db.session.add(UWI)
+    db.session.commit()
     print('Database Initialized!')
 
 @manager.command

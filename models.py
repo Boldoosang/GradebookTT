@@ -8,6 +8,7 @@ class User(db.Model):
     username = db.Column(db.String(64), unique = True)
     password = db.Column(db.String(300), nullable = False)
     enrolledSemesters = db.relationship("UserSemester", backref = "user", uselist = False)
+    enrolledUniversity = db.Column(db.String(64), db.ForeignKey("university.universityName"), nullable = True)
 
     def __init__(self, username, password):
         self.username = username
@@ -23,7 +24,8 @@ class User(db.Model):
         return {
             "userID" : self.userID,
             "username" : self.username,
-            "password" : self.password
+            "password" : self.password,
+            "university" : self.university
         }
     
     def enrollSemester(self, semesterYear, semesterTerm):
@@ -66,6 +68,26 @@ class User(db.Model):
             db.session.rollback()
             print("Unable to unenroll user from semester!")
             return False
+
+    def updateUniversity(self, universityName):
+        foundUniversity = db.session.query(University).filter_by(universityName=universityName).first()
+
+        updatedUniversity = None
+
+        if foundUniversity:
+            updatedUniversity = foundUniversity
+
+        try:
+            self.university = updatedUniversity
+            db.session.add(self)
+            db.session.commit()
+            return True
+        except:
+            db.session.rollback()
+            print("Unable to update university!")
+            return False
+        
+        return False
 
 class UserSemester(db.Model):
     userSemesterID = db.Column(db.Integer, primary_key = True)
@@ -246,8 +268,7 @@ class UserCourse(db.Model):
             print("Unable to update course marks!")
             db.session.rollback()
             return False
-        
-        
+              
 class Mark(db.Model):
     markID = db.Column(db.Integer, primary_key=True)
     userCourseID = db.Column(db.String(16), db.ForeignKey("user_course.userCourseID"), nullable = False)
@@ -273,19 +294,13 @@ class Mark(db.Model):
         
         return (self.receivedMark/self.totalMark)*self.weighting
 
-
-
 class University(db.Model):
     universityName = db.Column(db.String(64), primary_key = True)
     universityLogo = db.Column(db.String(300), nullable = True)
-
+    students = db.relationship("User", lazy="dynamic", backref="university", uselist= True)
+    
     def toDict(self):
         return {
             "universityName" : self.universityName,
             "universityLogo" : self.universityLogo
         }
-
-
-
-
-
