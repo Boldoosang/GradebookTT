@@ -261,9 +261,83 @@ async function dashboardHandler(){
     if("error" in user){
         dashboardContent.innerHTML = `<div class="text-center text-white">
                                     <h2>User is not logged in!</h2>
-                                    <p>${user["error"]}</p></div>`
+                                    <p>${user["error"]}</p>
+                                    </div>`
     } else {
-        dashboardContent.innerHTML = "testDashboard"
+        let currentYear = new Date().getFullYear()
+        dashboardContent.innerHTML = `<div class="d-flex align-items-start row">
+                                        <div class="nav flex-column nav-pills col-md-3" id="v-pills-tab" role="tablist">
+                                            <button class="nav-link" id="dashboard-semesters-tab" data-bs-toggle="pill" data-bs-target="#dashboard-semesters" type="button" role="tab">My Semesters</button>
+                                            <button class="nav-link" id="dashboard-courses-tab" data-bs-toggle="pill" data-bs-target="#dashboard-courses" type="button" role="tab">My Courses</button>
+                                        </div>
+                                        <div class="tab-content col-md-9" id="v-pills-tabContent">
+                                            <div class="tab-pane fade show active" id="defaultDashboardPage" role="tabpanel">
+                                                <div class="text-center text-white">
+                                                    <h2>Please select an option!</h2>
+                                                    <p>From the left hand menu, please select a dashboard option.</p>
+                                                </div>
+                                            </div>
+                                            <div class="tab-pane fade" id="dashboard-semesters" role="tabpanel">
+                                                <div class="text-white">
+                                                    <h2>My Semesters</h2>
+                                                    <hr class="my-3">
+
+                                                    <div>
+                                                        <h5>Enrolled Semesters</h5>
+                                                        <ul class="mt-2 list-group-flush px-0" id="dashboard-myEnrolledSemesters">
+                                                            sometext
+                                                        </ul>
+                                                    </div>
+                                                    
+                                                    <hr class="my-3">
+                                                    <h5>Semester Actions</h5>
+                                                    <a class="btn btn-success w-100 my-2" data-bs-toggle="collapse" href="#dashboard-mySemesters-enroll" role="button">
+                                                        Enroll in Semester
+                                                    </a>
+
+                                                    <div class="collapse mb-5" id="dashboard-mySemesters-enroll">
+                                                        <div class="card card-body bg-dark mt-3 border border-danger rounded">
+                                                            <form onsubmit="enrollSemester(event)">
+                                                                <div class="mb-3">
+                                                                    <label for="enrollSemester-semester" class="form-label">Semester</label>
+                                                                    <select class="form-select" name="semesterName" id="enrollSemester-semester">
+                                                                        <option value="1">Semester 1</option>
+                                                                        <option value="2">Semester 2</option>
+                                                                        <option value="3">Semester 3 (Summer)</option>
+                                                                    </select>
+                                                                </div>
+                                                                <div class="mb-3">
+                                                                    <label for="enrollSemester-year" class="form-label">Year</label>
+                                                                    <input type="number" name="semesterYear" min=2000 max=2100 class="form-control" value=${currentYear} id="enrollSemester-year">
+                                                                </div>
+                                                                <button type="submit" class="float-end btn btn-success">Enroll</button>
+                                                            </form>
+                                                        </div>
+                                                    </div>
+
+
+                                                    <a class="btn btn-danger w-100 my-2" data-bs-toggle="collapse" href="#dashboard-mySemesters-unenroll" role="button">
+                                                        Unenroll from Semester
+                                                    </a>
+
+                                                    <div class="collapse mb-5" id="dashboard-mySemesters-unenroll">
+                                                        <div class="card card-body bg-dark mt-3 border border-danger rounded">
+                                                            <form onsubmit="unenrollSemester(event)">
+                                                                <div class="mb-3">
+                                                                    <label for="unenrollSemester-semester" class="form-label">Semester</label>
+                                                                    <select class="form-select" name="semesterName" id="unenrollSemester-semester">
+                                                                        <option selected disabled>what</option>
+                                                                    </select>
+                                                                </div>
+                                                                <button type="submit" class="float-end btn btn-danger">Unenroll</button>
+                                                            </form>
+                                                        </div>
+                                                    </div>
+                                                    <hr class="my-3">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>`
     }
 }
 
