@@ -85,31 +85,27 @@ async function identifyUserContext(){
 
     let userStateArea = document.querySelector("#userStateArea");
     let mainTabArea = document.querySelector("#mainTab");
-    let welcomeBanner = document.querySelector("#welcomeBanner");
 
     if("username" in user){
         userStateArea.innerHTML = `<a class="nav-link" href="#" onclick="logout()">Logout</a>`
-        mainTabArea.innerHTML = `<li class="nav-item" role="presentation">
+        /*mainTabArea.innerHTML = `<li class="nav-item active" role="presentation">
                                     <a class="nav-link active" id="mainTab-home-tab" data-bs-toggle="pill" data-bs-target="#mainTab-home" type="button" role="tab">Home</a>
                                 </li>
                                 <li class="nav-item" role="presentation">
                                     <a class="nav-link" onclick="profileHandler()" id="mainTab-profile-tab" data-bs-toggle="pill" data-bs-target="#mainTab-profile" type="button" role="tab">Profile</a>
                                 </li>
                                 <li class="nav-item" role="presentation">
-                                    <a class="nav-link" id="mainTab-grades-tab" data-bs-toggle="pill" data-bs-target="#mainTab-grades" type="button" role="tab">Grades</a>
-                                </li>`
-        welcomeBanner.innerHTML = ` <h1 class="display-4">Welcome back, ${user["username"]}!</h1>
-                                    <p class="lead">As a logged in user, you are able to enroll within a semester, add courses to the semester, and add marks for the enrolled courses. The semester GPA and grades will be automatically calculated from the presented course marks.</p>`
+                                    <a class="nav-link" onclick="dashboardHandler()" id="mainTab-dashboard-tab" data-bs-toggle="pill" data-bs-target="#mainTab-dashboard" type="button" role="tab">Dashboard</a>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <a class="nav-link" onclick="gradeHandler()" id="mainTab-grades-tab" data-bs-toggle="pill" data-bs-target="#mainTab-grades" type="button" role="tab">Grades</a>
+                                </li>`*/
     } else {
         userStateArea.innerHTML = `<a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#userStateAction">Login/Register</a>`
-        mainTabArea.innerHTML = ``
-        welcomeBanner.innerHTML = ` <h1 class="display-4">Not logged in!</h1>
-                                    <p class="lead">Please log in to continue using the application. If you do not have an account, feel free to make one using the provided button.</p>
-                                    <p class="lead">GradebookTT is an application designed to help students keep track of their semester marks and respective GPAs for that semester. It provides the necessary tools for students to enroll in a semester, add their semester courses, and add the attained marks for their semester courses. Calculations will be automatically performed by the system to determine the student's performance and grades.</p>
-                                    <hr class="my-4">
-                                    <a class="btn btn-primary btn-lg mb-3" data-bs-toggle="modal" data-bs-target="#userStateAction">Login/Register</a>`
+        /*mainTabArea.innerHTML = `<li class="nav-item" role="presentation">
+                                    <a class="nav-link active" id="mainTab-home-tab" data-bs-toggle="pill" data-bs-target="#mainTab-home" type="button" role="tab">Home</a>
+                                </li>`*/
     }
-
 }
 
 async function register(event){
@@ -139,8 +135,6 @@ async function register(event){
 async function profileHandler(){
     let user = await identifyUser();
     let profileContent = document.querySelector("#profileContent")
-    console.log(profileContent)
-    console.log(user)
 
     if("error" in user){
         profileContent.innerHTML = `<div class="text-center text-white">
@@ -260,6 +254,32 @@ async function updateUniversity(event){
     
 }
 
+async function dashboardHandler(){
+    let user = await identifyUser();
+    let dashboardContent = document.querySelector("#dashboardContent")
+
+    if("error" in user){
+        dashboardContent.innerHTML = `<div class="text-center text-white">
+                                    <h2>User is not logged in!</h2>
+                                    <p>${user["error"]}</p></div>`
+    } else {
+        dashboardContent.innerHTML = "testDashboard"
+    }
+}
+
+
+async function gradeHandler(){
+    let user = await identifyUser();
+    let gradeContent = document.querySelector("#gradeContent")
+
+    if("error" in user){
+        gradeContent.innerHTML = `<div class="text-center text-white">
+                                    <h2>User is not logged in!</h2>
+                                    <p>${user["error"]}</p></div>`
+    } else {
+        gradeContent.innerHTML = "testGrade"
+    }
+}
 
 function main(){
     identifyUserContext()

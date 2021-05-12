@@ -22,7 +22,20 @@
             </button>
 
             <div class="collapse navbar-collapse align-middle" id="navbarActions">
-                <ul class="navbar-nav me-auto ml-3 nav align-middle" id="mainTab" role="tablist"></ul>
+                <ul class="navbar-nav me-auto ml-3 nav align-middle" id="mainTab" role="tablist">
+                    <li class="nav-item active" role="presentation">
+                        <a class="nav-link active" id="mainTab-home-tab" data-bs-toggle="pill" data-bs-target="#mainTab-home" type="button" role="tab">Home</a>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <a class="nav-link" onclick="profileHandler()" id="mainTab-profile-tab" data-bs-toggle="pill" data-bs-target="#mainTab-profile" type="button" role="tab">Profile</a>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <a class="nav-link" onclick="dashboardHandler()" id="mainTab-dashboard-tab" data-bs-toggle="pill" data-bs-target="#mainTab-dashboard" type="button" role="tab">Dashboard</a>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <a class="nav-link" onclick="gradeHandler()" id="mainTab-grades-tab" data-bs-toggle="pill" data-bs-target="#mainTab-grades" type="button" role="tab">Grades</a>
+                    </li>
+                </ul>
 
                 <div class="d-flex navbar-nav">
                     <li id="userStateArea" class="nav-item">
@@ -97,14 +110,19 @@
 
     <main class="container my-3 text-white">
         <div class="tab-content" id="mainTabContent">
-            <div class="tab-pane fade" id="mainTab-home" role="tabpanel">
-                <div id="welcomeBanner" class="jumbotron p-3 rounded border border-white">asda</div>
+            <div class="tab-pane active fade show" id="mainTab-home" role="tabpanel">
+                <div id="homeContent" class="p-3">
+                    <h1>Homepage Content</h1>
+                </div>
             </div>
-            <div class="mt-3 tab-pane fade border border-white rounded" id="mainTab-profile" role="tabpanel">
+            <div class="mt-3 tab-pane fade" id="mainTab-profile" role="tabpanel">
                 <div id="profileContent" class="p-3"></div>
             </div>
+            <div class="tab-pane fade" id="mainTab-dashboard" role="tabpanel">
+                <div id="dashboardContent" class="p-3"></div>
+            </div>
             <div class="tab-pane fade" id="mainTab-grades" role="tabpanel">
-                ...3
+                <div id="gradeContent" class="p-3"></div>
             </div>
         </div>
     </main>
