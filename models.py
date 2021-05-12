@@ -36,18 +36,18 @@ class User(db.Model):
 
         if existingSemester:
             print("User is already enrolled in this semester!")
-            return False
+            return 2
         
         try:
             newUserSemester = UserSemester(userID = self.userID, semesterYear = semesterYear, semesterTerm = semesterTerm)
             db.session.add(newUserSemester)
             db.session.commit()
             print("Enrolled user in semester!")
-            return True
+            return 1
         except:
             db.session.rollback()
             print("Unable to enroll user in semester!")
-            return False
+            return -1
 
     def unenrollSemester(self, semesterYear, semesterTerm):
         existingSemester = None
@@ -57,17 +57,17 @@ class User(db.Model):
 
         if not existingSemester:
             print("User is not enrolled in this semester!")
-            return False
+            return 2
         
         try:
             db.session.delete(existingSemester)
             db.session.commit()
             print("Unenrolled user from semester!")
-            return True
+            return 1
         except:
             db.session.rollback()
             print("Unable to unenroll user from semester!")
-            return False
+            return 0
 
     def updateUniversity(self, universityName):
         foundUniversity = db.session.query(University).filter_by(universityName=universityName).first()

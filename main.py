@@ -145,14 +145,25 @@ def getUserSemesters():
 @jwt_required()
 def enrollSemester():
     semesterDetails = request.get_json()
-
     if not semesterDetails:
         return json.dumps({"error" : "Invalid semester details supplied!"})
 
+    
     if "semesterYear" in semesterDetails and "semesterTerm" in semesterDetails:
-        outcome = current_user.enrollSemester(semesterYear = semesterDetails["semesterYear"], semesterTerm = semesterDetails["semesterTerm"])
-        if outcome:
+        if int(semesterDetails["semesterYear"]) < 2000 or int(semesterDetails["semesterYear"]) > 2050:
+            return json.dumps({"error" : "Invalid semester year entered!"})
+        
+        if int(semesterDetails["semesterTerm"]) < 1 or int(semesterDetails["semesterTerm"]) > 3:
+            return json.dumps({"error" : "Invalid semester term entered!"})
+
+        formattedYear = str(semesterDetails["semesterYear"]) + "/" + str(int(semesterDetails["semesterYear"]) + 1)
+        formattedTerm = "Semester_" + str(semesterDetails["semesterTerm"])
+        
+        outcome = current_user.enrollSemester(semesterYear = formattedYear, semesterTerm = formattedTerm)
+        if outcome == 1:
             return json.dumps({"message" : "Successfully enrolled in semester!"})
+        elif outcome == 2:
+            return json.dumps({"error" : "User is already enrolled in this semester!"})
 
     return json.dumps({"error" : "Unable to enroll in semester!"})
 
@@ -162,13 +173,27 @@ def enrollSemester():
 def unenrollSemester():
     semesterDetails = request.get_json()
 
+    print(semesterDetails)
+
     if not semesterDetails:
         return json.dumps({"error" : "Invalid semester details supplied!"})
 
     if "semesterYear" in semesterDetails and "semesterTerm" in semesterDetails:
-        outcome = current_user.unenrollSemester(semesterYear = semesterDetails["semesterYear"], semesterTerm = semesterDetails["semesterTerm"])
-        if outcome:
+        if int(semesterDetails["semesterYear"]) < 2000 or int(semesterDetails["semesterYear"]) > 2050:
+            return json.dumps({"error" : "Invalid semester year entered!"})
+        
+        if int(semesterDetails["semesterTerm"]) < 1 or int(semesterDetails["semesterTerm"]) > 3:
+            return json.dumps({"error" : "Invalid semester term entered!"})
+
+        formattedYear = str(semesterDetails["semesterYear"]) + "/" + str(int(semesterDetails["semesterYear"]) + 1)
+        formattedTerm = "Semester_" + str(semesterDetails["semesterTerm"])
+
+        outcome = current_user.unenrollSemester(semesterYear = formattedYear, semesterTerm = formattedTerm)
+
+        if outcome == 1:
             return json.dumps({"message" : "Successfully unenrolled from semester!"})
+        elif outcome == 2:
+            return json.dumps({"error" : "User was not enrolled in this semester!"})
 
     return json.dumps({"error" : "Unable to unenroll from semester!"})
 
