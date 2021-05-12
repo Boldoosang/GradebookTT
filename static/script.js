@@ -96,7 +96,7 @@ async function identifyUserContext(){
                                     <a class="nav-link" onclick="profileHandler()" id="mainTab-profile-tab" data-bs-toggle="pill" data-bs-target="#mainTab-profile" type="button" role="tab">Profile</a>
                                 </li>
                                 <li class="nav-item" role="presentation">
-                                    <a class="nav-link" id="mainTab-grades-tab" data-bs-toggle="pill" data-bs-target="#mainTab-grades" type="button" role="tab">Contact</a>
+                                    <a class="nav-link" id="mainTab-grades-tab" data-bs-toggle="pill" data-bs-target="#mainTab-grades" type="button" role="tab">Grades</a>
                                 </li>`
         welcomeBanner.innerHTML = ` <h1 class="display-4">Welcome back, ${user["username"]}!</h1>
                                     <p class="lead">As a logged in user, you are able to enroll within a semester, add courses to the semester, and add marks for the enrolled courses. The semester GPA and grades will be automatically calculated from the presented course marks.</p>`
@@ -170,17 +170,17 @@ async function profileHandler(){
                             <form onsubmit="changePassword(event)">
                                 <div class="form-group my-3">
                                 <label for="changePassword-oldPassword">Old Password</label>
-                                <input type="password" class="form-control mt-2" id="changePassword-oldPassword" placeholder="Old Password" required>
+                                <input type="password" class="form-control mt-2" name="oldPassword" id="changePassword-oldPassword" placeholder="Old Password" required>
                                 </div>
                                 <div class="form-group my-3">
                                 <label for="changePassword-newPassword">Password</label>
-                                <input type="password" class="form-control mt-2" id="changePassword-newPassword" placeholder="Password" required>
+                                <input type="password" class="form-control mt-2" name="password" id="changePassword-newPassword" placeholder="Password" required>
                                 </div>
                                 <div class="form-group my-3">
                                     <label for="changePassword-confirmPassword">Confirm Password</label>
-                                    <input type="password" class="form-control mt-2" id="changePassword-confirmPassword" placeholder="Confirm Password" required>
+                                    <input type="password" class="form-control mt-2" name="confirmPassword" id="changePassword-confirmPassword" placeholder="Confirm Password" required>
                                 </div>
-        
+                                <span id="updatePasswordMessage"></span>
                                 <button type="submit" class="float-end btn btn-danger mt-2">Change Password</button>
                             </form>
                         </div>
@@ -200,6 +200,7 @@ async function profileHandler(){
                                         <option>4.0 GPA University</option>
                                     </select>
                                 </div>
+                                <span id="updateUniversityMessage"></span>
                                 <button type="submit" class="float-end btn btn-danger mt-2">Update University</button>
                             </form>
                         </div>
@@ -219,20 +220,20 @@ async function changePassword(event){
     let form = event.target;
 
     let newPasswordDetails = {
-        "oldpassword" : form.elements["oldPassword"].value,
+        "oldPassword" : form.elements["oldPassword"].value,
         "password" : form.elements["password"].value,
         "confirmPassword" : form.elements["confirmPassword"].value
     }
 
     form.reset();
 
-    let result = await sendRequest("/profile/password", "POST", newPasswordDetails);
-    let messageArea = document.querySelector("#userActionMessage")
+    let result = await sendRequest("/profile/password", "PUT", newPasswordDetails);
+    let messageArea = document.querySelector("#updatePasswordMessage")
 
     if("error" in result){
         messageArea.innerHTML = `<b class="text-danger text-center">${result["error"]}</b>`
     } else {
-        messageArea.innerHTML = `<b class="text-success text-center">Registration successful!</b>`
+        messageArea.innerHTML = `<b class="text-success text-center">Password updated successfully!</b>`
     }
 
 }
@@ -240,6 +241,22 @@ async function changePassword(event){
 async function updateUniversity(event){
     event.preventDefault()
 
+    let form = event.target;
+
+    let updatedUniversityDetails = {
+        "universityName" : form.elements["universityName"].value,
+    }
+
+    form.reset();
+
+    let result = await sendRequest("/profile/university", "PUT", updatedUniversityDetails);
+    let messageArea = document.querySelector("#updateUniversityMessage")
+
+    if("error" in result){
+        messageArea.innerHTML = `<b class="text-danger text-center">${result["error"]}</b>`
+    } else {
+        messageArea.innerHTML = `<b class="text-success text-center">University updated successfully!</b>`
+    }
     
 }
 
