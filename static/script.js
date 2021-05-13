@@ -302,11 +302,11 @@ async function mySemestersDashboard(){
     try {
         for(userSemester of userSemesters){
             completeSemesterList += `<option>${userSemester.semesterYear}, ${userSemester.semesterTerm}</option>`
-            completeSemesterListHTML += `<li class="list-group-item">${userSemester.semesterYear}, ${userSemester.semesterTerm}</li>`
+            completeSemesterListHTML += `<li class="list-group-item m-0">${userSemester.semesterYear}, ${userSemester.semesterTerm}</li>`
         }
     } catch(e){
         completeSemesterList = `<option selected disabled>No enrolled semesters!</option>`
-        completeSemesterListHTML = `<p class="text-center mb-3">No enrolled semesters!</p>`
+        completeSemesterListHTML = `<li class="list-group-item mx-0 py-2 bg-dark text-center text-white border border-secondary">No enrolled semesters!</li>`
     }
 
     mySemestersDashboardArea.innerHTML = `<div class="text-white">
@@ -315,7 +315,9 @@ async function mySemestersDashboard(){
 
                                             <div>
                                                 <h5>Enrolled Semesters</h5>
-                                                <ul class="mt-2 list-group-flush px-0" id="dashboard-myEnrolledSemesters">${completeSemesterListHTML}</ul>
+                                                <div class="bg-secondary my-3 p-0">
+                                                    <ul class="list-group-flush px-0 mb-0" id="dashboard-myEnrolledSemesters">${completeSemesterListHTML}</ul>
+                                                </div>
                                             </div>
                                             
                                             <hr class="my-3">
