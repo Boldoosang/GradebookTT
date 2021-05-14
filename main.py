@@ -157,7 +157,7 @@ def enrollSemester():
             return json.dumps({"error" : "Invalid semester term entered!"})
 
         formattedYear = str(semesterDetails["semesterYear"]) + "/" + str(int(semesterDetails["semesterYear"]) + 1)
-        formattedTerm = "Semester_" + str(semesterDetails["semesterTerm"])
+        formattedTerm = "Semester " + str(semesterDetails["semesterTerm"])
         
         outcome = current_user.enrollSemester(semesterYear = formattedYear, semesterTerm = formattedTerm)
         if outcome == 1:
@@ -198,7 +198,7 @@ def unenrollSemester():
     return json.dumps({"error" : "Unable to unenroll from semester!"})
 
 
-@app.route("/api/semester/<userSemesterID>/courses", methods=["GET"])
+@app.route("/api/semesters/<userSemesterID>/courses", methods=["GET"])
 @jwt_required()
 def viewSemesterCourses(userSemesterID):
     if userSemesterID:
@@ -216,7 +216,7 @@ def viewSemesterCourses(userSemesterID):
 
     return json.dumps({"error" : "Unable to add course to semester!"})
 
-@app.route("/api/semester/<userSemesterID>/courses", methods=["POST"])
+@app.route("/api/semesters/<userSemesterID>/courses", methods=["POST"])
 @jwt_required()
 def addCourse(userSemesterID):
     courseDetails = request.get_json()

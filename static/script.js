@@ -233,6 +233,7 @@ async function changePassword(event){
         messageArea.innerHTML = `<b class="text-danger text-center">${result["error"]}</b>`
     } else {
         messageArea.innerHTML = `<b class="text-success text-center">Password updated successfully!</b>`
+        setTimeout(profileHandler, 3000);
     }
 
 }
@@ -246,15 +247,17 @@ async function updateUniversity(event){
         "universityName" : form.elements["universityName"].value,
     }
 
-    form.reset();
-
     let result = await sendRequest("/profile/university", "PUT", updatedUniversityDetails);
     let messageArea = document.querySelector("#updateUniversityMessage")
 
     if("error" in result){
         messageArea.innerHTML = `<b class="text-danger text-center">${result["error"]}</b>`
     } else {
-        messageArea.innerHTML = `<b class="text-success text-center">University updated successfully!</b>`
+        messageArea.innerHTML = `<div class="align-middle">
+                                    <div class="spinner-border text-success" role="status"></div>
+                                    <b class="text-success text-center">University updated successfully!</b>
+                                </div>`
+        setTimeout(profileHandler, 3000);
     }
     
 }
@@ -273,6 +276,7 @@ async function dashboardHandler(){
                                         <div class="nav flex-column nav-pills col-md-3" id="v-pills-tab" role="tablist">
                                             <button class="nav-link" id="dashboard-semesters-tab" data-bs-toggle="pill" data-bs-target="#dashboard-semesters" type="button" role="tab">My Semesters</button>
                                             <button class="nav-link" id="dashboard-courses-tab" data-bs-toggle="pill" data-bs-target="#dashboard-courses" type="button" role="tab">My Courses</button>
+                                            <button class="nav-link" id="dashboard-marks-tab" data-bs-toggle="pill" data-bs-target="#dashboard-marks" type="button" role="tab">My Marks</button>
                                         </div>
                                         <div class="tab-content col-md-9" id="v-pills-tabContent">
                                             <div class="tab-pane fade show active" id="defaultDashboardPage" role="tabpanel">
@@ -282,11 +286,19 @@ async function dashboardHandler(){
                                                 </div>
                                             </div>
                                             <div class="tab-pane fade" id="dashboard-semesters" role="tabpanel"></div>
+                                            <div class="tab-pane fade" id="dashboard-courses" role="tabpanel"></div>
+                                            <div class="tab-pane fade" id="dashboard-marks" role="tabpanel"></div>
                                         </div>
                                     </div>`
 
         let dashboardSemesterTab = document.querySelector("#dashboard-semesters-tab")
         dashboardSemesterTab.addEventListener("click", mySemestersDashboard)
+
+        let dashboardCoursesTab = document.querySelector("#dashboard-courses-tab")
+        dashboardCoursesTab.addEventListener("click", myCoursesDashboard)
+
+        let dashboardMarksTab = document.querySelector("#dashboard-marks-tab")
+        dashboardMarksTab.addEventListener("click", myMarksDashboard)
         
     }
 }
@@ -379,6 +391,178 @@ async function mySemestersDashboard(){
     semesterList.innerHTML = completeSemesterList
 }
 
+async function getSemesterCourses(semesterID){
+    let userCourseListingArea = document.querySelector(`#courses-courseListing-${semesterID}`);
+    let userCourseData = await sendRequest(`/api/semesters/${semesterID}/courses`, "GET")
+    console.log(userCourseData)
+    let courseEntries = "";
+
+    if("error" in userCourseData){
+        courseEntries = `<li class="list-group-item text-center">You have not enrolled in any courses for this semester!</li>`
+    } else {
+        for(userCourseDataEntry of userCourseData){
+            courseEntries += `<li class=" list-group-item card w-100 mb-3">
+                                    <div class="card-body">
+                                        <h5 class="card-title">${userCourseDataEntry.courseCode}</h5>
+                                        <h6 class="card-subtitle mb-2 text-muted">${userCourseDataEntry.courseName}</h6>
+                                        <p class="card-text">Some quick example text to build on the card title and make up the bulk of the card's content.</p>
+                                        <button type="button" onclick="leaveCourse(${userCourseDataEntry.userCourseID})" class="btn btn-danger">Remove Course</button>
+
+                                        <button class="btn btn-info" type="button" data-toggle="collapse" data-target="#updateCourse-${userCourseDataEntry.userCourseID}">
+                                            Update Course
+                                        </button>
+
+                                        <div class="collapse" id="updateCourse-${userCourseDataEntry.userCourseID}">
+                                            <div class="card card-body">
+                                                Anim pariatur cliche reprehenderit, enim eiusmod high life accusamus terry richardson ad squid. Nihil anim keffiyeh helvetica, craft beer labore wes anderson cred nesciunt sapiente ea proident.
+                                            </div>
+                                        </div>
+
+
+
+
+                                    </div>
+                                </li>`
+        }
+    }
+
+    userCourseListingArea.innerHTML = courseEntries;
+}
+
+async function leaveCourse(userCourseID){
+    let courseDetails = {
+        "userCourseID" : userCourseID
+    }
+
+    console.log(courseDetails)
+}
+
+async function enrollCourse(event, semesterID){
+    event.preventDefault()
+
+    let form = event.target
+
+    let courseDetails = {
+        "courseCode" : form.elements["courseCode"].value,
+        "courseName" : form.elements["courseName"].value,
+        "credits" : form.elements["credits"].value,
+        "towardsSemesterGPA" : form.elements["towardsSemesterGPA"].checked
+    }
+
+    console.log(courseDetails);
+
+    let result = await sendRequest(`/api/semesters/${semesterID}/courses`, "POST", courseDetails);
+    let messageArea = document.querySelector(`#addCourseMessage-${semesterID}`)
+
+    if("error" in result){
+        messageArea.innerHTML = `<b class="text-danger text-center">${result["error"]}</b>`
+    } else {
+        messageArea.innerHTML = `<div class="align-middle">
+                                    <div class="spinner-border text-success" role="status"></div>
+                                    <b class="text-success text-center">Course added successfully!</b>
+                                </div>`
+        setTimeout(myCoursesDashboard, 3000);
+    }
+}
+
+async function myCoursesDashboard(){
+    let userSemesters = await sendRequest("/api/semesters", "GET")
+    
+    let myCoursesDashboardArea = document.querySelector("#dashboard-courses")
+    completeSemesterListAccordion = ""
+
+    try {
+        for(userSemester of userSemesters){
+            console.log(userSemester)
+            completeSemesterListAccordion += `<div class="accordion-item bg-dark">
+                                                <h2 class="accordion-header" id="coursesSemesterList-${userSemester.userSemesterID}-header">
+                                                    <button class="accordion-button text-dark collapsed" type="button" onclick="getSemesterCourses(${userSemester.userSemesterID})" data-bs-toggle="collapse" data-bs-target="#coursesSemesterList-${userSemester.userSemesterID}">
+                                                        ${userSemester.semesterYear}, ${userSemester.semesterTerm}
+                                                    </button>
+                                                </h2>
+                                                <div id="coursesSemesterList-${userSemester.userSemesterID}" class="accordion-collapse collapse" data-bs-parent="#dashboardCourses-semesters">
+                                                    <div class="accordion-body collapsed bg-dark text-white border-end border-bottom border-start border-secondary">
+                                                        <ul class="list-group" id="courses-courseListing-${userSemester.userSemesterID}"></ul>
+
+                                                        <button class="btn btn-success mt-3" type="button" data-bs-toggle="collapse" data-bs-target="#semester-${userSemester.userSemesterID}-courseEnroll">
+                                                            Add Course
+                                                        </button>
+
+                                                        <div class="collapse" id="semester-${userSemester.userSemesterID}-courseEnroll">
+                                                            <div class="border border-success mt-3 p-4 rounded">
+                                                                <form onsubmit="enrollCourse(event, ${userSemester.userSemesterID})">
+                                                                    <div class="form-group mb-3">
+                                                                        <label for="enrollCourse-courseName">Course Name</label>
+                                                                        <input type="text" class="mt-1 form-control" name="courseName" id="enrollCourse-courseName" placeholder="eg: Individual Programming" required>
+                                                                    </div>
+
+                                                                    <div class="row">
+                                                                        <div class="col form-group mb-3">
+                                                                            <label for="enrollCourse-courseCode">Course Code</label>
+                                                                            <input type="text" class="mt-1 form-control" name="courseCode" id="enrollCourse-courseCode" placeholder="eg: SUBJ 0000" required>
+                                                                        </div>
+                                                                        
+                                                                        <div class="col form-group mb-3">
+                                                                            <label for="enrollCourse-credits">Credits</label>
+                                                                            <input type="number" class="mt-1 form-control" name="credits" id="enrollCourse-credits" placeholder="eg: 3" default=3 min=0 max=9 required>
+                                                                        </div>
+                                                                    </div>
+
+                                                                    <div class="form-check mb-3">
+                                                                        <input type="checkbox" name="towardsSemesterGPA" class="form-check-input" id="enrollCourse-towardsSemGPA">
+                                                                        <label class="form-check-label" for="enrollCourse-towardsSemGPA">Towards Semester GPA</label>
+                                                                    </div>
+                                                                    <span id="addCourseMessage-${userSemester.userSemesterID}"></span><br>
+                                                                    <button type="submit" class="btn btn-success">Add Course</button>
+                                                                </form>
+                                                            </div>
+                                                        </div>
+
+                                                    </div>
+                                                </div>
+                                            </div>`
+        }
+    } catch(e){
+        
+        completeSemesterListAccordion = `<div class="accordion-item bg-dark">
+                                            <p class="accordion-header mx-0 py-2 bg-dark text-center text-white border border-secondary" id="coursesSemesterList-noCourses">
+                                                No enrolled semesters for courses! Enroll in a semester before continuing.
+                                            </p>
+                                        </div>`
+    }
+
+    myCoursesDashboardArea.innerHTML = `<div class="text-white">
+                                            <h2>My Courses</h2>
+                                            <hr class="my-3">
+                                            <h5>Enrolled Courses by Semester</h5>
+
+                                            <div class="accordion bg-dark" id="dashboardCourses-semesters">${completeSemesterListAccordion}</div>
+                                        </div>`
+}
+
+
+
+async function myMarksDashboard(){
+    let userSemesters = await sendRequest("/api/semesters", "GET")
+    let myMarksDashboardArea = document.querySelector("#dashboard-marks")
+
+    try {
+        for(userSemester of userSemesters){
+            completeSemesterList += `<option>${userSemester.semesterYear}, ${userSemester.semesterTerm}</option>`
+            completeSemesterListHTML += `<li class="list-group-item m-0">${userSemester.semesterYear}, ${userSemester.semesterTerm}</li>`
+        }
+    } catch(e){
+        completeSemesterList = `<option selected disabled>No enrolled semesters!</option>`
+        completeSemesterListHTML = `<li class="list-group-item mx-0 py-2 bg-dark text-center text-white border border-secondary">No enrolled semesters!</li>`
+    }
+
+    myCoursesDashboardArea.innerHTML = `<div class="text-white">
+                                            <h2>My Marks</h2>
+                                            <hr class="my-3">
+
+                                        </div>`
+}
+
 async function enrollSemester(event){
     event.preventDefault()
 
@@ -416,7 +600,7 @@ async function unenrollSemester(event){
         let chunks = form.elements["semesterName"].value.split(", ");
 
         let yearChunks = chunks[0].split("/");
-        let termChunks = chunks[1].split("_");
+        let termChunks = chunks[1].split(" ");
 
         let semesterTerm = termChunks[1]
         let semesterYear = yearChunks[0]
