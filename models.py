@@ -134,14 +134,13 @@ class UserSemester(db.Model):
             print("Unable to remove course from database!")
             return False
 
-    def updateCourse(self, userCourseID, courseCode = None, courseName = None, credits = None, towardsSemesterGPA = None):
+    def updateCourse(self, userCourseID, courseCode = None, courseName = None, credits = None, towardsSemesterGPA = True):
         matchingCourse = self.userCourses.filter_by(userCourseID=userCourseID).first()
 
         if not matchingCourse:
             print("No matching course found!")
             return False
 
-        
         if courseCode:
             matchingCourse.courseCode = courseCode
         
@@ -152,7 +151,7 @@ class UserSemester(db.Model):
             matchingCourse.credits = credits
         
         if towardsSemesterGPA:
-            mathcingCourse.towardsSemesterGPA = towardsSemesterGPA
+            matchingCourse.towardsSemesterGPA = towardsSemesterGPA
 
         try:
             db.session.add(matchingCourse)

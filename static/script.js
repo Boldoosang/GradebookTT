@@ -394,33 +394,65 @@ async function mySemestersDashboard(){
 async function getSemesterCourses(semesterID){
     let userCourseListingArea = document.querySelector(`#courses-courseListing-${semesterID}`);
     let userCourseData = await sendRequest(`/api/semesters/${semesterID}/courses`, "GET")
-    console.log(userCourseData)
+
     let courseEntries = "";
 
     if("error" in userCourseData){
         courseEntries = `<li class="list-group-item text-center">You have not enrolled in any courses for this semester!</li>`
     } else {
         for(userCourseDataEntry of userCourseData){
+            let checkedStatus = ""
+
+            if(userCourseDataEntry.towardsSemesterGPA)
+                checkedStatus = "checked"
+
             courseEntries += `<li class=" list-group-item card w-100 mb-3">
                                     <div class="card-body">
                                         <h5 class="card-title">${userCourseDataEntry.courseCode}</h5>
                                         <h6 class="card-subtitle mb-2 text-muted">${userCourseDataEntry.courseName}</h6>
                                         <p class="card-text">Some quick example text to build on the card title and make up the bulk of the card's content.</p>
-                                        <button type="button" onclick="leaveCourse(${userCourseDataEntry.userCourseID})" class="btn btn-danger">Remove Course</button>
 
-                                        <button class="btn btn-info" type="button" data-toggle="collapse" data-target="#updateCourse-${userCourseDataEntry.userCourseID}">
-                                            Update Course
-                                        </button>
 
-                                        <div class="collapse" id="updateCourse-${userCourseDataEntry.userCourseID}">
-                                            <div class="card card-body">
-                                                Anim pariatur cliche reprehenderit, enim eiusmod high life accusamus terry richardson ad squid. Nihil anim keffiyeh helvetica, craft beer labore wes anderson cred nesciunt sapiente ea proident.
-                                            </div>
+                                        <button class="btn btn-danger" type="button" data-bs-toggle="collapse" data-bs-target="#removeCourse-${userCourseDataEntry.userCourseID}">Remove Course</button>
+                                        <button class="btn btn-primary" type="button" data-bs-toggle="collapse" data-bs-target="#updateCourse-${userCourseDataEntry.userCourseID}">Update Course</button>
+
+                                        <div class="collapse mt-3 p-4 bg-dark text-white rounded" id="removeCourse-${userCourseDataEntry.userCourseID}">
+                                            <p>Are you sure you want to remove the course?</p>
+                                            <span id="removeCourseMessage-${userCourseDataEntry.userCourseID}"></span><br>
+                                            <button type="button" onclick="leaveCourse(${userCourseDataEntry.userCourseID}, ${semesterID})" class="btn btn-danger">Remove Course</button>
+                                            <button class="btn btn-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#removeCourse-${userCourseDataEntry.userCourseID}">Cancel</button>
                                         </div>
 
+                                       
 
+                                        <div class="collapse rounded" id="updateCourse-${userCourseDataEntry.userCourseID}">
+                                            <form class="mt-3 p-4 bg-dark text-white rounded" onsubmit="updateCourse(event, ${userCourseDataEntry.userCourseID}, ${semesterID})">
+                                                <div class="form-group mb-3">
+                                                    <label for="updateCourse-courseName-${userCourseDataEntry.userCourseID}">Course Name</label>
+                                                    <input type="text" class="mt-1 form-control" name="courseName" id="updateCourse-courseName-${userCourseDataEntry.userCourseID}" value="${userCourseDataEntry.courseName}" required>
+                                                </div>
 
+                                                <div class="row">
+                                                    <div class="col form-group mb-3">
+                                                        <label for="updateCourse-courseCode-${userCourseDataEntry.userCourseID}">Course Code</label>
+                                                        <input type="text" class="mt-1 form-control" name="courseCode" id="updateCourse-courseCode-${userCourseDataEntry.userCourseID}" value="${userCourseDataEntry.courseCode}" required>
+                                                    </div>
+                                                    
+                                                    <div class="col form-group mb-3">
+                                                        <label for="updateCourse-credits-${userCourseDataEntry.userCourseID}">Credits</label>
+                                                        <input type="number" class="mt-1 form-control" name="credits" id="updateCourse-credits-${userCourseDataEntry.userCourseID}" value="${userCourseDataEntry.credits}" default=3 min=0 max=9 required>
+                                                    </div>
+                                                </div>
 
+                                                <div class="form-check mb-3">
+                                                    <input type="checkbox" ${checkedStatus} name="towardsSemesterGPA" class="form-check-input" id="updateCourse-towardsSemGPA-${userCourseDataEntry.userCourseID}">
+                                                    <label class="form-check-label" for="updateCourse-towardsSemGPA-${userCourseDataEntry.userCourseID}">Towards Semester GPA</label>
+                                                </div>
+
+                                                <span id="updateCourseMessage-${userCourseDataEntry.userCourseID}"></span><br>
+                                                <button type="submit" class="btn btn-primary">Update Course</button>
+                                            </form>
+                                        </div>
                                     </div>
                                 </li>`
         }
@@ -429,12 +461,51 @@ async function getSemesterCourses(semesterID){
     userCourseListingArea.innerHTML = courseEntries;
 }
 
-async function leaveCourse(userCourseID){
+async function leaveCourse(userCourseID, semesterID){
     let courseDetails = {
         "userCourseID" : userCourseID
     }
+    
+    let result = await sendRequest(`/api/semesters/${semesterID}/courses`, "DELETE", courseDetails);
+    let messageArea = document.querySelector(`#removeCourseMessage-${userCourseID}`)
 
-    console.log(courseDetails)
+    if("error" in result){
+        messageArea.innerHTML = `<b class="text-danger text-center">${result["error"]}</b>`
+    } else {
+        messageArea.innerHTML = `<div class="align-middle">
+                                    <div class="spinner-border text-success" role="status"></div>
+                                    <b class="text-success text-center">Course removed successfully!</b>
+                                </div>`
+        setTimeout(myCoursesDashboard, 3000);
+    }
+}
+
+async function updateCourse(event, userCourseID, semesterID){
+    event.preventDefault();
+
+    let form = event.target
+
+    let updateDetails = {
+        "userCourseID" : userCourseID,
+        "courseCode" : form.elements["courseCode"].value,
+        "courseName" : form.elements["courseName"].value,
+        "credits" : form.elements["credits"].value,
+        "towardsSemesterGPA" : form.elements["towardsSemesterGPA"].checked,
+    }
+
+    let result = await sendRequest(`/api/semesters/${semesterID}/courses`, "PUT", updateDetails);
+
+    let messageArea = document.querySelector(`#updateCourseMessage-${userCourseID}`)
+
+    if("error" in result){
+        messageArea.innerHTML = `<b class="text-danger text-center">${result["error"]}</b>`
+    } else {
+        messageArea.innerHTML = `<div class="align-middle">
+                                    <div class="spinner-border text-success" role="status"></div>
+                                    <b class="text-success text-center">Course updated successfully!</b>
+                                </div>`
+        setTimeout(myCoursesDashboard, 3000);
+    }
 }
 
 async function enrollCourse(event, semesterID){
@@ -448,8 +519,6 @@ async function enrollCourse(event, semesterID){
         "credits" : form.elements["credits"].value,
         "towardsSemesterGPA" : form.elements["towardsSemesterGPA"].checked
     }
-
-    console.log(courseDetails);
 
     let result = await sendRequest(`/api/semesters/${semesterID}/courses`, "POST", courseDetails);
     let messageArea = document.querySelector(`#addCourseMessage-${semesterID}`)
@@ -473,7 +542,6 @@ async function myCoursesDashboard(){
 
     try {
         for(userSemester of userSemesters){
-            console.log(userSemester)
             completeSemesterListAccordion += `<div class="accordion-item bg-dark">
                                                 <h2 class="accordion-header" id="coursesSemesterList-${userSemester.userSemesterID}-header">
                                                     <button class="accordion-button text-dark collapsed" type="button" onclick="getSemesterCourses(${userSemester.userSemesterID})" data-bs-toggle="collapse" data-bs-target="#coursesSemesterList-${userSemester.userSemesterID}">
@@ -492,25 +560,25 @@ async function myCoursesDashboard(){
                                                             <div class="border border-success mt-3 p-4 rounded">
                                                                 <form onsubmit="enrollCourse(event, ${userSemester.userSemesterID})">
                                                                     <div class="form-group mb-3">
-                                                                        <label for="enrollCourse-courseName">Course Name</label>
-                                                                        <input type="text" class="mt-1 form-control" name="courseName" id="enrollCourse-courseName" placeholder="eg: Individual Programming" required>
+                                                                        <label for="enrollCourse-courseName-${userSemester.userSemesterID}">Course Name</label>
+                                                                        <input type="text" class="mt-1 form-control" name="courseName" id="enrollCourse-courseName-${userSemester.userSemesterID}" placeholder="eg: Individual Programming" required>
                                                                     </div>
 
                                                                     <div class="row">
                                                                         <div class="col form-group mb-3">
-                                                                            <label for="enrollCourse-courseCode">Course Code</label>
-                                                                            <input type="text" class="mt-1 form-control" name="courseCode" id="enrollCourse-courseCode" placeholder="eg: SUBJ 0000" required>
+                                                                            <label for="enrollCourse-courseCode-${userSemester.userSemesterID}">Course Code</label>
+                                                                            <input type="text" class="mt-1 form-control" name="courseCode" id="enrollCourse-courseCode-${userSemester.userSemesterID}" placeholder="eg: SUBJ 0000" required>
                                                                         </div>
                                                                         
                                                                         <div class="col form-group mb-3">
-                                                                            <label for="enrollCourse-credits">Credits</label>
-                                                                            <input type="number" class="mt-1 form-control" name="credits" id="enrollCourse-credits" placeholder="eg: 3" default=3 min=0 max=9 required>
+                                                                            <label for="enrollCourse-credits-${userSemester.userSemesterID}">Credits</label>
+                                                                            <input type="number" class="mt-1 form-control" name="credits" id="enrollCourse-credits-${userSemester.userSemesterID}" placeholder="eg: 3" value=3 min=0 max=9 required>
                                                                         </div>
                                                                     </div>
 
                                                                     <div class="form-check mb-3">
-                                                                        <input type="checkbox" name="towardsSemesterGPA" class="form-check-input" id="enrollCourse-towardsSemGPA">
-                                                                        <label class="form-check-label" for="enrollCourse-towardsSemGPA">Towards Semester GPA</label>
+                                                                        <input type="checkbox" name="towardsSemesterGPA" class="form-check-input" checked id="enrollCourse-towardsSemGPA-${userSemester.userSemesterID}">
+                                                                        <label class="form-check-label" for="enrollCourse-towardsSemGPA-${userSemester.userSemesterID}">Towards Semester GPA</label>
                                                                     </div>
                                                                     <span id="addCourseMessage-${userSemester.userSemesterID}"></span><br>
                                                                     <button type="submit" class="btn btn-success">Add Course</button>

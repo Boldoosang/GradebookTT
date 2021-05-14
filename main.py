@@ -244,6 +244,84 @@ def addCourse(userSemesterID):
     return json.dumps({"error" : "Unable to add course to semester!"})
 
 
+@app.route("/api/semesters/<userSemesterID>/courses", methods=["PUT"])
+@jwt_required()
+def updateCourse(userSemesterID):
+    courseDetails = request.get_json()
+
+    print(courseDetails)
+
+    if not courseDetails:
+        return json.dumps({"error" : "Invalid course details supplied!"})
+
+    if "userCourseID" not in courseDetails:
+        return json.dumps({"error" : "No course ID supplied!"})
+
+    foundCourseQuery = db.session.query(UserCourse).filter_by(userCourseID=courseDetails["userCourseID"]).first()
+
+    if not foundCourseQuery:
+        return json.dumps({"error" : "Invalid course!"})
+
+    foundSemester = foundCourseQuery.semester.query.filter_by(userID = current_user.userID, userSemesterID = foundCourseQuery.userSemesterID).first()
+
+    if not foundSemester:
+        return json.dumps({"error" : "Course not found for this semester!"})
+
+    courseCode = None
+    courseName = None
+    credits = None
+    towardsSemesterGPA = True
+
+    if "courseCode" in courseDetails:
+        courseCode = courseDetails["courseCode"]
+
+    if "courseName" in courseDetails:
+        courseName = courseDetails["courseName"]
+    
+    if "credits" in courseDetails:
+        if int(courseDetails["credits"]) < 0 and int(courseDetails["credits"]) > 9:
+            return json.dumps({"error" : "Invalid credit amount entered!"})
+
+        credits = courseDetails["credits"]
+    
+    if "towardsSemesterGPA" in courseDetails:
+        towardsSemesterGPA = courseDetails["towardsSemesterGPA"]
+    
+    outcome = foundSemester.updateCourse(userCourseID = foundCourseQuery.userCourseID, courseCode = courseCode, courseName = courseName, credits = credits, towardsSemesterGPA = towardsSemesterGPA)
+
+    if outcome:
+        return json.dumps({"message" : "Successfully updated course details in semester!"})
+
+    return json.dumps({"error" : "Unable to update course details in semester!"})
+    
+
+@app.route("/api/semesters/<userSemesterID>/courses", methods=["DELETE"])
+@jwt_required()
+def leaveCourse(userSemesterID):
+    courseDetails = request.get_json()
+
+    if not courseDetails:
+        return json.dumps({"error" : "Invalid course details supplied!"})
+
+    if "userCourseID" in courseDetails:
+        foundCourseQuery = db.session.query(UserCourse).filter_by(userCourseID=courseDetails["userCourseID"]).first()
+
+        if not foundCourseQuery:
+            return json.dumps({"error" : "Invalid course!"})
+
+        foundSemester = foundCourseQuery.semester.query.filter_by(userID = current_user.userID, userSemesterID = foundCourseQuery.userSemesterID).first()
+
+        if not foundSemester:
+            return json.dumps({"error" : "Course not found for this semester!"})
+        
+        outcome = foundSemester.removeCourse(userCourseID = foundCourseQuery.userCourseID)
+
+        if outcome:
+            return json.dumps({"message" : "Successfully removed course from semester!"})
+
+    return json.dumps({"error" : "Unable to remove course from semester!"})
+
+
 @app.route("/profile/university", methods=["PUT"])
 @jwt_required()
 def updateUniversity():
