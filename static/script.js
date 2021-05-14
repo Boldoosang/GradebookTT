@@ -47,7 +47,7 @@ async function login(event){
     let result = await sendRequest("/login", "POST", loginDetails);
     let messageArea = document.querySelector("#userActionMessage")
 
-    if("error" in result){
+    if("error" in result || "msg" in result){
         messageArea.innerHTML = `<b class="text-danger text-center">${result["error"]}</b>`
     } else {
         window.localStorage.setItem("access_token", result["access_token"]);
@@ -124,7 +124,7 @@ async function register(event){
     let result = await sendRequest("/register", "POST", registrationDetails);
     let messageArea = document.querySelector("#userActionMessage")
 
-    if("error" in result){
+    if("error" in result || "msg" in result){
         messageArea.innerHTML = `<b class="text-danger text-center">${result["error"]}</b>`
     } else {
         messageArea.innerHTML = `<b class="text-success text-center">Registration successful!</b>`
@@ -142,64 +142,64 @@ async function profileHandler(){
                                     <p>${user["error"]}</p></div>`
     } else {
         profileContent.innerHTML = `
-                    <h1>My Profile</h1>
-                    <hr class="my-3">
-                    
-                    <div class="form-group my-3">
-                        <label for="profile-username">Current Username</label>
-                        <input type="text" class="form-control mt-2" id="profile-username" readonly disabled>
-                    </div>
+                                    <div class="d-flex align-items-start row">
+                                        <div class="nav flex-column nav-pills col-md-3 mb-3 border border-primary rounded p-0" id="v-pills-tab" role="tablist">
+                                            <button class="nav-link active border-bottom border-primary rounded-0" id="profile-home-tab" data-bs-toggle="pill" data-bs-target="#profile-home" type="button" role="tab">Home</button>
+                                            <button class="nav-link border-bottom border-primary rounded-0" id="profile-password-tab" data-bs-toggle="pill" data-bs-target="#profile-password" type="button" role="tab">Password</button>
+                                            <button class="nav-link" id="profile-university-tab" data-bs-toggle="pill" data-bs-target="#profile-university" type="button" role="tab">University</button>
+                                        </div>
+                                        <div class="tab-content col-md-9 ps-3 mb-3" id="v-pills-tabContent">
+                                            <div class="tab-pane fade ps-3 show active" id="profile-home" role="tabpanel">
+                                                <h1>My Profile</h1>
+                                                <hr class="my-3">
+                                                <div class="form-group my-3">
+                                                    <label for="profile-username">Current Username</label>
+                                                    <input type="text" class="form-control mt-2" id="profile-username" readonly disabled>
+                                                </div>
 
-                    <div class="form-group my-3">
-                        <label for="profile-universityName">Current University Grading Scheme</label>
-                        <input type="text" class="form-control mt-2" id="profile-universityName" readonly disabled>
-                    </div>
+                                                <div class="form-group my-3">
+                                                    <label for="profile-universityName">Current University Grading Scheme</label>
+                                                    <input type="text" class="form-control mt-2" id="profile-universityName" readonly disabled>
+                                                </div>
+                                            </div>
+                                            <div class="tab-pane fade ps-3 mb-3" id="profile-password" role="tabpanel">
+                                                <h1>My Password</h1>
+                                                <hr class="my-3">
+                                                <form onsubmit="changePassword(event)">
+                                                    <div class="form-group my-3">
+                                                        <label for="changePassword-oldPassword">Old Password</label>
+                                                        <input type="password" class="form-control mt-2" name="oldPassword" id="changePassword-oldPassword" placeholder="Old Password" required>
+                                                    </div>
+                                                    <div class="form-group my-3">
+                                                        <label for="changePassword-newPassword">Password</label>
+                                                        <input type="password" class="form-control mt-2" name="password" id="changePassword-newPassword" placeholder="Password" required>
+                                                    </div>
+                                                    <div class="form-group my-3">
+                                                        <label for="changePassword-confirmPassword">Confirm Password</label>
+                                                        <input type="password" class="form-control mt-2" name="confirmPassword" id="changePassword-confirmPassword" placeholder="Confirm Password" required>
+                                                    </div>
+                                                    <div class="mb-1" id="updatePasswordMessage"></div>
+                                                    <button type="submit" class="float-end btn btn-danger mt-2">Change Password</button>
+                                                </form>
 
-                    <a class="btn btn-primary w-100" data-bs-toggle="collapse" href="#changePasswordArea" role="button">
-                        Change Password
-                    </a>
-                    
-                    <div class="collapse mb-5" id="changePasswordArea">
-                        <div class="card card-body bg-dark mt-3 border border-danger rounded">
-                            <form onsubmit="changePassword(event)">
-                                <div class="form-group my-3">
-                                <label for="changePassword-oldPassword">Old Password</label>
-                                <input type="password" class="form-control mt-2" name="oldPassword" id="changePassword-oldPassword" placeholder="Old Password" required>
-                                </div>
-                                <div class="form-group my-3">
-                                <label for="changePassword-newPassword">Password</label>
-                                <input type="password" class="form-control mt-2" name="password" id="changePassword-newPassword" placeholder="Password" required>
-                                </div>
-                                <div class="form-group my-3">
-                                    <label for="changePassword-confirmPassword">Confirm Password</label>
-                                    <input type="password" class="form-control mt-2" name="confirmPassword" id="changePassword-confirmPassword" placeholder="Confirm Password" required>
-                                </div>
-                                <span id="updatePasswordMessage"></span>
-                                <button type="submit" class="float-end btn btn-danger mt-2">Change Password</button>
-                            </form>
-                        </div>
-                    </div>
-
-                    <a class="btn btn-primary w-100 my-2" data-bs-toggle="collapse" href="#changeUniversityArea" role="button">
-                        Update University
-                    </a>
-
-                    <div class="collapse mb-5" id="changeUniversityArea">
-                        <div class="card card-body bg-dark mt-3 border border-danger rounded">
-                            <form onsubmit="updateUniversity(event)">
-                                <div class="form-group my-3">
-                                    <label for="updateUniversity-universityName">University</label>
-                                    <select name="universityName" class="form-control mt-2" id="updateUniversity-universityName" required>
-                                        <option>University of the West Indies</option>
-                                        <option>4.0 GPA University</option>
-                                    </select>
-                                </div>
-                                <span id="updateUniversityMessage"></span>
-                                <button type="submit" class="float-end btn btn-danger mt-2">Update University</button>
-                            </form>
-                        </div>
-                    </div>
-                </div>`
+                                            </div>
+                                            <div class="tab-pane fade ps-3 mb-3" id="profile-university" role="tabpanel">
+                                                <h1>My University</h1>
+                                                <hr class="my-3">
+                                                <form onsubmit="updateUniversity(event)">
+                                                    <div class="form-group my-3">
+                                                        <label for="updateUniversity-universityName">University</label>
+                                                        <select name="universityName" class="form-control mt-2" id="updateUniversity-universityName" required>
+                                                            <option>University of the West Indies</option>
+                                                            <option>4.0 GPA University</option>
+                                                        </select>
+                                                    </div>
+                                                    <div class="mb-1" id="updateUniversityMessage"></div>
+                                                    <button type="submit" class="float-end btn btn-danger mt-2">Update University</button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>`
 
         let usernameArea = document.querySelector("#profile-username")
         let universityArea = document.querySelector("#profile-universityName")
@@ -229,7 +229,7 @@ async function changePassword(event){
     let result = await sendRequest("/profile/password", "PUT", newPasswordDetails);
     let messageArea = document.querySelector("#updatePasswordMessage")
 
-    if("error" in result){
+    if("error" in result || "msg" in result){
         messageArea.innerHTML = `<b class="text-danger text-center">${result["error"]}</b>`
     } else {
         messageArea.innerHTML = `<b class="text-success text-center">Password updated successfully!</b>`
@@ -250,7 +250,7 @@ async function updateUniversity(event){
     let result = await sendRequest("/profile/university", "PUT", updatedUniversityDetails);
     let messageArea = document.querySelector("#updateUniversityMessage")
 
-    if("error" in result){
+    if("error" in result || "msg" in result){
         messageArea.innerHTML = `<b class="text-danger text-center">${result["error"]}</b>`
     } else {
         messageArea.innerHTML = `<div class="align-middle">
@@ -273,21 +273,21 @@ async function dashboardHandler(){
                                     </div>`
     } else {
         dashboardContent.innerHTML = `<div class="d-flex align-items-start row">
-                                        <div class="nav flex-column nav-pills col-md-3" id="v-pills-tab" role="tablist">
-                                            <button class="nav-link" id="dashboard-semesters-tab" data-bs-toggle="pill" data-bs-target="#dashboard-semesters" type="button" role="tab">My Semesters</button>
-                                            <button class="nav-link" id="dashboard-courses-tab" data-bs-toggle="pill" data-bs-target="#dashboard-courses" type="button" role="tab">My Courses</button>
+                                        <div class="nav flex-column nav-pills col-md-3 mb-3 border border-primary rounded p-0" id="v-pills-tab" role="tablist">
+                                            <button class="nav-link border-bottom border-primary rounded-0" id="dashboard-semesters-tab" data-bs-toggle="pill" data-bs-target="#dashboard-semesters" type="button" role="tab">My Semesters</button>
+                                            <button class="nav-link border-bottom border-primary rounded-0" id="dashboard-courses-tab" data-bs-toggle="pill" data-bs-target="#dashboard-courses" type="button" role="tab">My Courses</button>
                                             <button class="nav-link" id="dashboard-marks-tab" data-bs-toggle="pill" data-bs-target="#dashboard-marks" type="button" role="tab">My Marks</button>
                                         </div>
-                                        <div class="tab-content col-md-9" id="v-pills-tabContent">
+                                        <div class="tab-content col-md-9 ps-3" id="v-pills-tabContent">
                                             <div class="tab-pane fade show active" id="defaultDashboardPage" role="tabpanel">
                                                 <div class="text-center text-white">
                                                     <h2>Please select an option!</h2>
-                                                    <p>From the left hand menu, please select a dashboard option.</p>
+                                                    <p>Please select a dashboard option.</p>
                                                 </div>
                                             </div>
-                                            <div class="tab-pane fade" id="dashboard-semesters" role="tabpanel"></div>
-                                            <div class="tab-pane fade" id="dashboard-courses" role="tabpanel"></div>
-                                            <div class="tab-pane fade" id="dashboard-marks" role="tabpanel"></div>
+                                            <div class="tab-pane fade ps-3" id="dashboard-semesters" role="tabpanel"></div>
+                                            <div class="tab-pane fade ps-3" id="dashboard-courses" role="tabpanel"></div>
+                                            <div class="tab-pane fade ps-3" id="dashboard-marks" role="tabpanel"></div>
                                         </div>
                                     </div>`
 
@@ -312,6 +312,7 @@ async function mySemestersDashboard(){
     let completeSemesterListHTML = ""
     
     try {
+        userSemesters = userSemesters.sort(function(a, b){ return a.semesterName > b.semesterName})
         for(userSemester of userSemesters){
             completeSemesterList += `<option>${userSemester.semesterYear}, ${userSemester.semesterTerm}</option>`
             completeSemesterListHTML += `<li class="list-group-item m-0">${userSemester.semesterYear}, ${userSemester.semesterTerm}</li>`
@@ -357,7 +358,7 @@ async function mySemestersDashboard(){
                                                                 <input type="number" name="semesterYearEnd" min=2001 max=2051 class="form-control" value=${currentYear+1} readonly disabled id="enrollSemester-yearEnd"> 
                                                             </div>
                                                         </div>
-                                                        <span id="enrollSemesterMessage"></span>
+                                                        <div class="mb-1" id="enrollSemesterMessage"></div>
                                                         <button type="submit" class="float-end btn btn-success">Enroll</button>
                                                     </form>
                                                 </div>
@@ -376,7 +377,7 @@ async function mySemestersDashboard(){
                                                             <select class="form-select" name="semesterName" id="unenrollSemester-semester">
                                                             </select>
                                                         </div>
-                                                        <span id="unenrollSemesterMessage"></span>
+                                                        <div class="mb-1" id="unenrollSemesterMessage"></div>
                                                         <button type="submit" class="float-end btn btn-danger">Unenroll</button>
                                                     </form>
                                                 </div>
@@ -402,23 +403,25 @@ async function getSemesterCourses(semesterID){
     } else {
         for(userCourseDataEntry of userCourseData){
             let checkedStatus = ""
+            let isTowardsGPA = "<span class='text-danger'>Not towards GPA</span>"
 
-            if(userCourseDataEntry.towardsSemesterGPA)
+            if(userCourseDataEntry.towardsSemesterGPA){
                 checkedStatus = "checked"
-
+                isTowardsGPA = "<span class='text-success'>Towards GPA</span>"
+            }
+      
+            console.log(userCourseDataEntry)
             courseEntries += `<li class=" list-group-item card w-100 mb-3">
                                     <div class="card-body">
                                         <h5 class="card-title">${userCourseDataEntry.courseCode}</h5>
-                                        <h6 class="card-subtitle mb-2 text-muted">${userCourseDataEntry.courseName}</h6>
-                                        <p class="card-text">Some quick example text to build on the card title and make up the bulk of the card's content.</p>
-
+                                        <h6 class="card-subtitle mb-3 text-muted">${userCourseDataEntry.courseName} - ${userCourseDataEntry.credits} Credits, ${isTowardsGPA}</h6>
 
                                         <button class="btn btn-danger" type="button" data-bs-toggle="collapse" data-bs-target="#removeCourse-${userCourseDataEntry.userCourseID}">Remove Course</button>
                                         <button class="btn btn-primary" type="button" data-bs-toggle="collapse" data-bs-target="#updateCourse-${userCourseDataEntry.userCourseID}">Update Course</button>
 
                                         <div class="collapse mt-3 p-4 bg-dark text-white rounded" id="removeCourse-${userCourseDataEntry.userCourseID}">
                                             <p>Are you sure you want to remove the course?</p>
-                                            <span id="removeCourseMessage-${userCourseDataEntry.userCourseID}"></span><br>
+                                            <div class="mb-1" id="removeCourseMessage-${userCourseDataEntry.userCourseID}"></div><br>
                                             <button type="button" onclick="leaveCourse(${userCourseDataEntry.userCourseID}, ${semesterID})" class="btn btn-danger">Remove Course</button>
                                             <button class="btn btn-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#removeCourse-${userCourseDataEntry.userCourseID}">Cancel</button>
                                         </div>
@@ -449,7 +452,7 @@ async function getSemesterCourses(semesterID){
                                                     <label class="form-check-label" for="updateCourse-towardsSemGPA-${userCourseDataEntry.userCourseID}">Towards Semester GPA</label>
                                                 </div>
 
-                                                <span id="updateCourseMessage-${userCourseDataEntry.userCourseID}"></span><br>
+                                                <div class="mb-1" id="updateCourseMessage-${userCourseDataEntry.userCourseID}"></div><br>
                                                 <button type="submit" class="btn btn-primary">Update Course</button>
                                             </form>
                                         </div>
@@ -469,7 +472,7 @@ async function leaveCourse(userCourseID, semesterID){
     let result = await sendRequest(`/api/semesters/${semesterID}/courses`, "DELETE", courseDetails);
     let messageArea = document.querySelector(`#removeCourseMessage-${userCourseID}`)
 
-    if("error" in result){
+    if("error" in result || "msg" in result){
         messageArea.innerHTML = `<b class="text-danger text-center">${result["error"]}</b>`
     } else {
         messageArea.innerHTML = `<div class="align-middle">
@@ -493,11 +496,13 @@ async function updateCourse(event, userCourseID, semesterID){
         "towardsSemesterGPA" : form.elements["towardsSemesterGPA"].checked,
     }
 
+    console.log(updateDetails)
+
     let result = await sendRequest(`/api/semesters/${semesterID}/courses`, "PUT", updateDetails);
 
     let messageArea = document.querySelector(`#updateCourseMessage-${userCourseID}`)
 
-    if("error" in result){
+    if("error" in result || "msg" in result){
         messageArea.innerHTML = `<b class="text-danger text-center">${result["error"]}</b>`
     } else {
         messageArea.innerHTML = `<div class="align-middle">
@@ -523,7 +528,7 @@ async function enrollCourse(event, semesterID){
     let result = await sendRequest(`/api/semesters/${semesterID}/courses`, "POST", courseDetails);
     let messageArea = document.querySelector(`#addCourseMessage-${semesterID}`)
 
-    if("error" in result){
+    if("error" in result || "msg" in result){
         messageArea.innerHTML = `<b class="text-danger text-center">${result["error"]}</b>`
     } else {
         messageArea.innerHTML = `<div class="align-middle">
@@ -541,6 +546,7 @@ async function myCoursesDashboard(){
     completeSemesterListAccordion = ""
 
     try {
+        userSemesters = userSemesters.sort(function(a, b){ return a.semesterName > b.semesterName})
         for(userSemester of userSemesters){
             completeSemesterListAccordion += `<div class="accordion-item bg-dark">
                                                 <h2 class="accordion-header" id="coursesSemesterList-${userSemester.userSemesterID}-header">
@@ -580,7 +586,7 @@ async function myCoursesDashboard(){
                                                                         <input type="checkbox" name="towardsSemesterGPA" class="form-check-input" checked id="enrollCourse-towardsSemGPA-${userSemester.userSemesterID}">
                                                                         <label class="form-check-label" for="enrollCourse-towardsSemGPA-${userSemester.userSemesterID}">Towards Semester GPA</label>
                                                                     </div>
-                                                                    <span id="addCourseMessage-${userSemester.userSemesterID}"></span><br>
+                                                                    <div class="mb-1" id="addCourseMessage-${userSemester.userSemesterID}"></div><br>
                                                                     <button type="submit" class="btn btn-success">Add Course</button>
                                                                 </form>
                                                             </div>
@@ -602,9 +608,11 @@ async function myCoursesDashboard(){
     myCoursesDashboardArea.innerHTML = `<div class="text-white">
                                             <h2>My Courses</h2>
                                             <hr class="my-3">
-                                            <h5>Enrolled Courses by Semester</h5>
+                                            <h5 class="mb-3">Enrolled Courses by Semester</h5>
 
                                             <div class="accordion bg-dark" id="dashboardCourses-semesters">${completeSemesterListAccordion}</div>
+
+                                            <hr class="my-3">
                                         </div>`
 }
 
@@ -613,22 +621,28 @@ async function myCoursesDashboard(){
 async function myMarksDashboard(){
     let userSemesters = await sendRequest("/api/semesters", "GET")
     let myMarksDashboardArea = document.querySelector("#dashboard-marks")
-
+    let completeSemesterList = ""
     try {
         for(userSemester of userSemesters){
             completeSemesterList += `<option>${userSemester.semesterYear}, ${userSemester.semesterTerm}</option>`
-            completeSemesterListHTML += `<li class="list-group-item m-0">${userSemester.semesterYear}, ${userSemester.semesterTerm}</li>`
         }
     } catch(e){
         completeSemesterList = `<option selected disabled>No enrolled semesters!</option>`
         completeSemesterListHTML = `<li class="list-group-item mx-0 py-2 bg-dark text-center text-white border border-secondary">No enrolled semesters!</li>`
     }
 
-    myCoursesDashboardArea.innerHTML = `<div class="text-white">
+    myMarksDashboardArea.innerHTML = `<div class="text-white">
                                             <h2>My Marks</h2>
                                             <hr class="my-3">
+                                            <h5 class="mb-3">Semester</h5>
 
-                                        </div>`
+                                            <select id="marks-selectSemester" class="form-select">
+                                                ${completeSemesterList}
+                                            </select>
+
+
+                                            <hr class="my-3">
+                                      </div>`
 }
 
 async function enrollSemester(event){
@@ -646,7 +660,7 @@ async function enrollSemester(event){
     let result = await sendRequest("/api/semesters", "POST", semesterDetails);
     let messageArea = document.querySelector("#enrollSemesterMessage")
 
-    if("error" in result){
+    if("error" in result || "msg" in result){
         messageArea.innerHTML = `<b class="text-danger text-center">${result["error"]}</b>`
     } else {
         messageArea.innerHTML = `<div class="align-middle">
@@ -691,7 +705,7 @@ async function unenrollSemester(event){
     let result = await sendRequest("/api/semesters", "DELETE", semesterDetails);
     let messageArea = document.querySelector("#unenrollSemesterMessage")
 
-    if("error" in result){
+    if("error" in result || "msg" in result){
         messageArea.innerHTML = `<b class="text-danger text-center">${result["error"]}</b>`
     } else {
         messageArea.innerHTML = `<div class="align-middle">

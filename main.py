@@ -160,6 +160,7 @@ def enrollSemester():
         formattedTerm = "Semester " + str(semesterDetails["semesterTerm"])
         
         outcome = current_user.enrollSemester(semesterYear = formattedYear, semesterTerm = formattedTerm)
+
         if outcome == 1:
             return json.dumps({"message" : "Successfully enrolled in semester!"})
         elif outcome == 2:
@@ -173,8 +174,6 @@ def enrollSemester():
 def unenrollSemester():
     semesterDetails = request.get_json()
 
-    print(semesterDetails)
-
     if not semesterDetails:
         return json.dumps({"error" : "Invalid semester details supplied!"})
 
@@ -186,7 +185,7 @@ def unenrollSemester():
             return json.dumps({"error" : "Invalid semester term entered!"})
 
         formattedYear = str(semesterDetails["semesterYear"]) + "/" + str(int(semesterDetails["semesterYear"]) + 1)
-        formattedTerm = "Semester_" + str(semesterDetails["semesterTerm"])
+        formattedTerm = "Semester " + str(semesterDetails["semesterTerm"])
 
         outcome = current_user.unenrollSemester(semesterYear = formattedYear, semesterTerm = formattedTerm)
 
@@ -194,6 +193,8 @@ def unenrollSemester():
             return json.dumps({"message" : "Successfully unenrolled from semester!"})
         elif outcome == 2:
             return json.dumps({"error" : "User was not enrolled in this semester!"})
+        elif outcome == 3:
+            return json.dumps({"error" : "Please remove all courses before unenrolling from a semester!"})
 
     return json.dumps({"error" : "Unable to unenroll from semester!"})
 
@@ -226,6 +227,12 @@ def addCourse(userSemesterID):
 
 
     if "courseCode" in courseDetails and "courseName" in courseDetails:
+        if len(courseDetails["courseCode"].strip()) <= 3:
+            return json.dumps({"error" : "Invalid course code supplied!"})
+
+        if len(courseDetails["courseName"].strip()) <= 3:
+            return json.dumps({"error" : "Invalid course name supplied!"})
+
         foundSemester = db.session.query(UserSemester).filter_by(userID=current_user.userID, userSemesterID=userSemesterID).first()
 
         if not foundSemester:
@@ -248,8 +255,6 @@ def addCourse(userSemesterID):
 @jwt_required()
 def updateCourse(userSemesterID):
     courseDetails = request.get_json()
-
-    print(courseDetails)
 
     if not courseDetails:
         return json.dumps({"error" : "Invalid course details supplied!"})

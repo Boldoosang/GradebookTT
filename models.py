@@ -1,5 +1,6 @@
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
+from sqlalchemy.exc import IntegrityError, OperationalError
 
 db = SQLAlchemy()
 
@@ -52,8 +53,12 @@ class User(db.Model):
     def unenrollSemester(self, semesterYear, semesterTerm):
         existingSemester = None
 
+        print(semesterYear, semesterTerm)
+
         if self.enrolledSemesters:
             existingSemester = self.enrolledSemesters.query.filter_by(semesterYear = semesterYear, semesterTerm = semesterTerm).first()
+
+
 
         if not existingSemester:
             print("User is not enrolled in this semester!")
@@ -64,6 +69,10 @@ class User(db.Model):
             db.session.commit()
             print("Unenrolled user from semester!")
             return 1
+        except IntegrityError:
+            db.session.rollback()
+            print("Please remove all courses for this semester before unenrolling!")
+            return 3
         except:
             db.session.rollback()
             print("Unable to unenroll user from semester!")
@@ -142,16 +151,21 @@ class UserSemester(db.Model):
             return False
 
         if courseCode:
-            matchingCourse.courseCode = courseCode
+            if len(courseCode.strip()) > 3:
+                matchingCourse.courseCode = courseCode
+            else:
+                return False
         
         if courseName:
-            matchingCourse.courseName = courseName
+            if len(courseName.strip()) > 3:
+                matchingCourse.courseName = courseName
+            else:
+                return False
         
         if credits:
             matchingCourse.credits = credits
-        
-        if towardsSemesterGPA:
-            matchingCourse.towardsSemesterGPA = towardsSemesterGPA
+
+        matchingCourse.towardsSemesterGPA = towardsSemesterGPA
 
         try:
             db.session.add(matchingCourse)
