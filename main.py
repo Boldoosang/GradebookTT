@@ -326,6 +326,46 @@ def leaveCourse(userSemesterID):
 
     return json.dumps({"error" : "Unable to remove course from semester!"})
 
+@app.route("/api/semesters/<userSemesterID>/courses/<userCourseID>", methods=["POST"])
+@jwt_required()
+def addCourseMark(userSemesterID, userCourseID):
+    markDetails = request.get_json()
+
+    if not markDetails:
+        return json.dumps({"error" : "Invalid mark details supplied!"})
+
+    if "component" not in markDetails or "weighting" not in markDetails:
+        return json.dumps({"error" : "Invalid mark details supplied!"})
+
+    totalMark = None
+    receivedMark = None
+
+    if "totalMark" in markDetails:
+        totalMark = markDetails["totalMark"]
+
+    if "receivedMark" in markDetails:
+        receivedMark = markDetails["receivedMark"]
+
+    if userCourseID:
+        foundCourseQuery = db.session.query(UserCourse).filter_by(userCourseID=userCourseID).first()
+
+        if not foundCourseQuery:
+            return json.dumps({"error" : "Invalid course!"})
+
+        foundSemester = foundCourseQuery.semester.query.filter_by(userID = current_user.userID, userSemesterID = foundCourseQuery.userSemesterID).first()
+
+        if not foundSemester:
+            return json.dumps({"error" : "Course not found for this semester!"})
+        
+        outcome = foundCourseQuery.addMark(component = markDetails["component"], totalMark = totalMark, weighting = markDetails["weighting"], receivedMark=receivedMark)
+
+        if outcome == 1:
+            return json.dumps({"message" : "Successfully added mark to course!"})
+        elif outcome == 2:
+            return json.dumps({"error" : "Mark already exists for this course component!"})
+
+    return json.dumps({"error" : "Unable to add mark to course!"})
+
 
 @app.route("/profile/university", methods=["PUT"])
 @jwt_required()

@@ -201,16 +201,22 @@ class UserCourse(db.Model):
         }
 
     def addMark(self, component, totalMark, weighting, receivedMark=None):
+        existingMark = db.session.query(Mark).filter_by(component=component, userCourseID=self.userCourseID).first()
+
+        if existingMark:
+            print("A component already exists for this mark!")
+            return 2
+
         try:
             newMark = Mark(userCourseID=self.userCourseID, component=component, receivedMark=receivedMark, totalMark=totalMark, weighting=weighting)
             db.session.add(newMark)
             db.session.commit()
             print("Added mark to course!")
-            return True
+            return 1
         except:
             db.session.rollback()
             print("Unable to add mark to course!")
-            return False
+            return 0
 
     def updateMark(self, markID, component = None, totalMark = None, weighting = None, receivedMark=None):
         foundMark = self.marks.filter_by(userCourseID=self.userCourseID, markID=markID).first()
@@ -287,7 +293,7 @@ class Mark(db.Model):
     userCourseID = db.Column(db.String(16), db.ForeignKey("user_course.userCourseID"), nullable = False)
     component = db.Column(db.String(64), nullable = False)
     receivedMark = db.Column(db.Float, nullable = True)
-    totalMark = db.Column(db.Float, nullable = False)
+    totalMark = db.Column(db.Float, nullable = True)
     weighting = db.Column(db.Float, nullable = False)
 
     def toDict(self):

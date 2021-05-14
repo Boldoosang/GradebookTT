@@ -541,8 +541,8 @@ async function enrollCourse(event, semesterID){
 
 async function myCoursesDashboard(){
     let userSemesters = await sendRequest("/api/semesters", "GET")
-    
     let myCoursesDashboardArea = document.querySelector("#dashboard-courses")
+
     completeSemesterListAccordion = ""
 
     try {
@@ -622,27 +622,183 @@ async function myMarksDashboard(){
     let userSemesters = await sendRequest("/api/semesters", "GET")
     let myMarksDashboardArea = document.querySelector("#dashboard-marks")
     let completeSemesterList = ""
+    let isDisabled = ""
+
     try {
         for(userSemester of userSemesters){
-            completeSemesterList += `<option>${userSemester.semesterYear}, ${userSemester.semesterTerm}</option>`
+            completeSemesterList += `<option value="${userSemester.userSemesterID}">${userSemester.semesterYear}, ${userSemester.semesterTerm}</option>`
         }
     } catch(e){
         completeSemesterList = `<option selected disabled>No enrolled semesters!</option>`
+        isDisabled = "disabled"
         completeSemesterListHTML = `<li class="list-group-item mx-0 py-2 bg-dark text-center text-white border border-secondary">No enrolled semesters!</li>`
     }
 
     myMarksDashboardArea.innerHTML = `<div class="text-white">
                                             <h2>My Marks</h2>
                                             <hr class="my-3">
-                                            <h5 class="mb-3">Semester</h5>
+                                            <div id="marksBody">
+                                                <div id="marks-selectSemesterForm">
+                                                    <h5 class="mb-3">Semester</h5>
+                                                    <form onsubmit="marksGetCourses(event)">
+                                                        <select name="selectedSemester" id="marks-selectSemester" class="form-select">
+                                                            ${completeSemesterList}
+                                                        </select>
+                                                        <button type="submit" ${isDisabled} class="btn btn-success mt-3">Select Semester</button>
+                                                    </form>
+                                                </div>
 
-                                            <select id="marks-selectSemester" class="form-select">
-                                                ${completeSemesterList}
-                                            </select>
+                                                <hr class="my-3">
 
-
-                                            <hr class="my-3">
+                                                <div id="marks-selectCourseForm"></div>
+                                            </div>
                                       </div>`
+}
+
+async function marksGetCourses(event){
+    event.preventDefault()
+    let selectedSemester = event.target.elements["selectedSemester"].value
+    let courseFormArea = document.querySelector("#marks-selectCourseForm")
+
+    let semesterCourses = await sendRequest(`/api/semesters/${selectedSemester}/courses`, "GET");
+    let completeSemesterCourseList = ""
+    let isDisabled = ""
+
+    try {
+        for(semesterCourse of semesterCourses){
+            completeSemesterCourseList += `<option data-marks="${semesterCourse.marks}" value="${semesterCourse.userCourseID}">${semesterCourse.courseCode} - ${semesterCourse.courseName}</option>`
+        }
+    } catch(e){
+        completeSemesterCourseList = `<option selected disabled>No added courses!</option>`
+        isDisabled = "disabled"
+    }
+
+    courseFormArea.innerHTML = `<h5 class="mb-3">Course</h5>
+                                <form onsubmit="loadMarksDashboard(event, ${selectedSemester})">
+                                    <select name="selectedCourse" id="marks-selectCourse" class="form-select">
+                                        ${completeSemesterCourseList}
+                                    </select>
+                                    <button type="submit" ${isDisabled} class="btn btn-success mt-3">Select Course</button>
+                                </form>
+                                <hr class="my-4">
+                                
+                                
+                                `
+    
+}
+
+async function loadMarksDashboardListing(courseMarks, userSemesterID, userCourseID){
+    let markDashboardArea = document.querySelector("#marksBody")
+
+    completeMarkListHTML = ""
+
+    try {
+        if(courseMarks.length > 0){
+            for(courseMark of courseMarks){
+                completeMarkListHTML += `<div class="card w-100">
+                                            <div class="card-body text-dark">
+                                                <h5 class="card-title">${courseMark.component}</h5>
+                                                <h6 class="card-subtitle mb-2 text-muted">Yes</h6>
+                                                <p class="card-text">Placeholder</p>
+                                            </div>
+                                        </div>`
+            }
+        } else {
+            completeMarkListHTML = `<div class="bg-dark">
+                                        <p class="amx-0 py-2 bg-dark text-center text-white border border-secondary" id="courseMarkList-noMarks">
+                                            No marks for this course! Add a mark to this course before continuing.
+                                        </p>
+                                    </div>`
+        }
+
+    } catch(e){
+        
+        completeMarkListHTML = `<div class="bg-dark">
+									<p class="amx-0 py-2 bg-dark text-center text-white border border-secondary" id="courseMarkList-noMarks">
+										No marks for this course! Add a mark to this course before continuing.
+									</p>
+								</div>`
+    }
+
+    markDashboardArea.innerHTML = `<div class="text-white">
+										<h5 class="mb-3">Coursework Components</h5>
+
+										<div class="bg-dark" id="dashboardMarks-listing">${completeMarkListHTML}</div>
+
+                                        <button class="btn btn-success mt-3" type="button" data-bs-toggle="collapse" data-bs-target="#marks-addMark">
+                                            Add Mark
+                                        </button>
+
+                                        <div class="collapse" id="marks-addMark">
+                                            <div class="border border-success mt-3 p-4 rounded">
+                                                <form onsubmit="addMark(event, ${userSemesterID}, ${userCourseID})">
+                                                    <div class="form-group mb-3">
+                                                        <label for="addMark-componentName">Component Name</label>
+                                                        <input type="text" class="mt-1 form-control" name="component" id="addMark-componentName" placeholder="eg: Coursework Exam I" required>
+                                                    </div>
+
+                                                    <div class="row">
+                                                        <div class="col form-group mb-3">
+                                                            <label for="addMark-receivedMark">Received Mark</label>
+                                                            <input type="number" class="mt-1 form-control" name="receivedMark" id="addMark-receivedMark" placeholder="eg: 94">
+                                                        </div>
+                                                        
+                                                        <div class="col form-group mb-3">
+                                                            <label for="addMark-totalMark">Total Mark</label>
+                                                            <input type="number" class="mt-1 form-control" name="totalMark" id="addMark-totalMark" placeholder="eg: 100">
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="form-group mb-3">
+                                                        <label class="mb-1" for="addMark-weighting">Weighting</label>
+                                                        <div class="input-group mb-3">
+                                                            <input type="number" class="form-control" name="weighting" id="addMark-weighting" placeholder="eg: 15">
+                                                            <span class="input-group-text">%</span>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="mb-1" id="addMarkMessage"></div><br>
+                                                    <button type="submit" class="btn btn-success">Add Mark</button>
+                                                </form>
+                                            </div>
+                                        </div>
+
+										<hr class="my-3">
+									</div>`
+}
+
+async function addMark(event, userSemesterID, userCourseID){
+    let test
+}
+
+async function loadMarksDashboard(event, userSemesterID){
+    event.preventDefault()
+    let markDashboardArea = document.querySelector("#marksBody")
+
+    let selectedCourseID = event.target.elements["selectedCourse"].value
+
+    let semesterCourses = await sendRequest(`/api/semesters/${userSemesterID}/courses`, "GET");
+
+    let courseMarks = null
+
+    if("error" in semesterCourses || "msg" in semesterCourses){
+        markDashboardArea.innerHTML = `<b class="text-danger text-center">${semesterCourses["error"]}</b>`
+    } else {
+        try {
+            for(semesterCourse of semesterCourses)
+                if(semesterCourse.userCourseID == selectedCourseID)
+                    courseMarks = semesterCourse.marks
+            
+            if(courseMarks == null)
+                markDashboardArea.innerHTML = `<b class="text-danger text-center">Course not found in your courses!</b>`
+            else {
+                loadMarksDashboardListing(courseMarks, userSemesterID, selectedCourseID)
+            }
+
+        } catch (e) {
+            markDashboardArea.innerHTML = `<b class="text-danger text-center">An unexpected error has occurred!</b>`
+        }
+    }
 }
 
 async function enrollSemester(event){
@@ -697,9 +853,6 @@ async function unenrollSemester(event){
         return;
     }
     
-
-    
-
     form.reset();
 
     let result = await sendRequest("/api/semesters", "DELETE", semesterDetails);
