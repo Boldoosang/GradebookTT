@@ -312,7 +312,20 @@ async function mySemestersDashboard(){
     let completeSemesterListHTML = ""
     
     try {
-        userSemesters = userSemesters.sort(function(a, b){ return a.semesterName > b.semesterName})
+        userSemesters = userSemesters.sort((a, b) => {
+            if (a.semesterYear < b.semesterYear)
+                return 1;
+
+            if(a.semesterYear == b.semesterYear){
+                if (a.semesterTerm < b.semesterTerm)
+                    return 1;
+                else
+                    return -1;
+            }
+                
+            if (a.semesterYear > b.semesterYear)
+                return -1;
+        })
         for(userSemester of userSemesters){
             completeSemesterList += `<option>${userSemester.semesterYear}, ${userSemester.semesterTerm}</option>`
             completeSemesterListHTML += `<li class="list-group-item m-0">${userSemester.semesterYear}, ${userSemester.semesterTerm}</li>`
@@ -401,6 +414,8 @@ async function getSemesterCourses(semesterID){
     if("error" in userCourseData){
         courseEntries = `<li class="list-group-item text-center">You have not enrolled in any courses for this semester!</li>`
     } else {
+        userCourseData = userCourseData.sort((a, b) => (a.courseCode > b.courseCode ? 1 : -1))
+
         for(userCourseDataEntry of userCourseData){
             let checkedStatus = ""
             let isTowardsGPA = "<span class='text-danger'>Not towards GPA</span>"
@@ -541,7 +556,21 @@ async function myCoursesDashboard(){
     completeSemesterListAccordion = ""
 
     try {
-        userSemesters = userSemesters.sort(function(a, b){ return a.semesterName > b.semesterName})
+        userSemesters = userSemesters.sort((a, b) => {
+            if (a.semesterYear < b.semesterYear)
+                return 1;
+
+            if(a.semesterYear == b.semesterYear){
+                if (a.semesterTerm < b.semesterTerm)
+                    return 1;
+                else
+                    return -1;
+            }
+                
+            if (a.semesterYear > b.semesterYear)
+                return -1;
+        })
+
         for(userSemester of userSemesters){
             completeSemesterListAccordion += `<div class="accordion-item bg-dark">
                                                 <h2 class="accordion-header" id="coursesSemesterList-${userSemester.userSemesterID}-header">
@@ -613,6 +642,7 @@ async function myCoursesDashboard(){
 
 
 
+
 async function myMarksDashboard(){
     let userSemesters = await sendRequest("/api/semesters", "GET")
     let myMarksDashboardArea = document.querySelector("#dashboard-marks")
@@ -675,10 +705,7 @@ async function marksGetCourses(event){
                                     </select>
                                     <button type="submit" ${isDisabled} class="btn btn-success mt-3">Select Course</button>
                                 </form>
-                                <hr class="my-4">
-                                
-                                
-                                `
+                                <hr class="my-4">`
     
 }
 
@@ -749,7 +776,7 @@ async function loadMarksDashboardListing(userSemesterID, userCourseID){
                                                         <div class="row">
                                                             <div class="col form-group mb-3">
                                                                 <label for="updateMark-receivedMark-${courseMark.markID}">Received Mark</label>
-                                                                <input type="number" class="mt-1 form-control" name="receivedMark" id="updateMark-receivedMark-${courseMark.markID}" value="${courseMark.receivedMark}">
+                                                                <input type="number" class="mt-1 form-control" name="receivedMark" id="updateMark-receivedMark-${courseMark.markID}" value="${courseMark.receivedMark}" step="any">
                                                             </div>
                                                             
                                                             <div class="col form-group mb-3">
@@ -810,7 +837,7 @@ async function loadMarksDashboardListing(userSemesterID, userCourseID){
                                                     <div class="row">
                                                         <div class="col form-group mb-3">
                                                             <label for="addMark-receivedMark">Received Mark</label>
-                                                            <input type="number" class="mt-1 form-control" name="receivedMark" id="addMark-receivedMark" placeholder="eg: 94">
+                                                            <input type="number" class="mt-1 form-control" name="receivedMark" id="addMark-receivedMark" placeholder="eg: 94" step="any">
                                                         </div>
                                                         
                                                         <div class="col form-group mb-3">
@@ -950,7 +977,6 @@ async function enrollSemester(event){
         "semesterYear" : form.elements["semesterYearStart"].value
     }
 
-    form.reset();
 
     let result = await sendRequest("/api/semesters", "POST", semesterDetails);
     let messageArea = document.querySelector("#enrollSemesterMessage")
@@ -1008,17 +1034,70 @@ async function unenrollSemester(event){
     }
 }
 
+async function loadSemesterGradeDetails(userSemesterID){
+    console.log(userSemesterID)
+}
+
 
 async function gradeHandler(){
     let user = await identifyUser();
-    let gradeContent = document.querySelector("#gradeContent")
+    let courseGradeArea = document.querySelector("#gradeContent")
 
     if("error" in user){
-        gradeContent.innerHTML = `<div class="text-center text-white">
-                                    <h2>User is not logged in!</h2>
-                                    <p>${user["error"]}</p></div>`
+        courseGradeArea.innerHTML = `<div class="text-center text-white">
+                                        <h2>User is not logged in!</h2>
+                                        <p>${user["error"]}</p>
+                                    </div>`
     } else {
-        gradeContent.innerHTML = "testGrade"
+        let semesterCourses = await sendRequest(`/api/semesters`, "GET");
+
+        if("error" in semesterCourses){
+            courseGradeArea.innerHTML = `<div class="text-center text-white">
+                                            <h2>User is not enrolled in any semesters!</h2>
+                                            <p>${user["error"]}</p>
+                                        </div>`
+        } else {
+            let gradeSemesterMenuButtons = "";
+            let gradeSemesterTabs = "";
+
+            semesterCourses = semesterCourses.sort((a, b) => {
+                if (a.semesterYear < b.semesterYear)
+                    return 1;
+    
+                if(a.semesterYear == b.semesterYear){
+                    if (a.semesterTerm < b.semesterTerm)
+                        return 1;
+                    else
+                        return -1;
+                }
+                    
+                if (a.semesterYear > b.semesterYear)
+                    return -1;
+            })
+
+            for(semesterCourse of semesterCourses){
+                console.log(semesterCourse)
+                gradeSemesterMenuButtons += `<button class="nav-link border-bottom border-primary rounded-0" onclick="loadSemesterGradeDetails(${semesterCourse.userSemesterID})" id="grades-semester-${semesterCourse.userSemesterID}-tab" data-bs-toggle="pill" data-bs-target="#grades-semester-${semesterCourse.userSemesterID}" type="button" role="tab">${semesterCourse.semesterYear}, ${semesterCourse.semesterTerm}</button>`
+                gradeSemesterTabs += `<div class="tab-pane fade ps-3" id="grades-semester-${semesterCourse.userSemesterID}" role="tabpanel"></div>`
+            }
+            courseGradeArea.innerHTML = `<div class="d-flex align-items-start row">
+                                            
+                                            <div class="nav flex-column nav-pills col-md-3 mb-3 border border-primary border-bottom-0 rounded p-0" id="v-pills-gradeTab" role="tablist">
+                                                ${gradeSemesterMenuButtons}
+                                            </div>
+
+                                            <div class="tab-content col-md-9 ps-3" id="v-pills-gradeTabContent">
+                                                <div class="tab-pane fade show active" id="defaultGradePage" role="tabpanel">
+                                                    <div class="text-center text-white">
+                                                        <h2>Please select a semester!</h2>
+                                                        <p>Please select a semester to view the course and mark details for that semester.</p>
+                                                    </div>
+                                                </div>
+                                                
+                                                ${gradeSemesterTabs}
+                                            </div>
+                                        </div>`
+        }
     }
 }
 

@@ -429,19 +429,19 @@ def updateCourseMark(userSemesterID, userCourseID):
         component = markDetails["component"]
 
     if "totalMark" in markDetails:
-        if int(markDetails["totalMark"]) < 0 or int(markDetails["totalMark"]) > 100:
+        if float(markDetails["totalMark"]) < 0 or float(markDetails["totalMark"]) > 100:
             return json.dumps({"error" : "Invalid total mark entered!"})
 
         totalMark = markDetails["totalMark"]
     
     if "receivedMark" in markDetails:
-        if int(markDetails["receivedMark"]) < 0 or int(markDetails["receivedMark"]) > 100:
+        if float(markDetails["receivedMark"]) < 0 or float(markDetails["receivedMark"]) > 100:
             return json.dumps({"error" : "Invalid received mark entered!"})
             
         receivedMark = markDetails["receivedMark"]
 
     if "weighting" in markDetails:
-        if int(markDetails["weighting"]) < 0 or int(markDetails["weighting"]) > 100:
+        if float(markDetails["weighting"]) < 0 or float(markDetails["weighting"]) > 100:
             return json.dumps({"error" : "Invalid weighting entered!"})
             
         weighting = markDetails["weighting"]
