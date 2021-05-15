@@ -308,7 +308,10 @@ class Mark(db.Model):
         }
 
     def calculateWeightedMark(self):
-        if not self.receivedMark:
+        if self.receivedMark == None:
+            return None
+        
+        if self.totalMark == None:
             return None
         
         return (self.receivedMark/self.totalMark)*self.weighting

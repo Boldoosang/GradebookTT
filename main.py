@@ -4,7 +4,7 @@ from sqlalchemy.exc import IntegrityError, OperationalError
 import os
 import json
 
-from models import db, User, UserSemester, UserCourse, University
+from models import db, User, UserSemester, UserCourse, University, Mark
 
 def create_app():
     app = Flask(__name__)
@@ -284,7 +284,7 @@ def updateCourse(userSemesterID):
         courseName = courseDetails["courseName"]
     
     if "credits" in courseDetails:
-        if int(courseDetails["credits"]) < 0 and int(courseDetails["credits"]) > 9:
+        if int(courseDetails["credits"]) < 0 or int(courseDetails["credits"]) > 9:
             return json.dumps({"error" : "Invalid credit amount entered!"})
 
         credits = courseDetails["credits"]
@@ -326,7 +326,7 @@ def leaveCourse(userSemesterID):
 
     return json.dumps({"error" : "Unable to remove course from semester!"})
 
-@app.route("/api/semesters/<userSemesterID>/courses/<userCourseID>", methods=["POST"])
+@app.route("/api/semesters/<userSemesterID>/courses/<userCourseID>/marks", methods=["POST"])
 @jwt_required()
 def addCourseMark(userSemesterID, userCourseID):
     markDetails = request.get_json()
@@ -366,6 +366,93 @@ def addCourseMark(userSemesterID, userCourseID):
 
     return json.dumps({"error" : "Unable to add mark to course!"})
 
+@app.route("/api/semesters/<userSemesterID>/courses/<userCourseID>/marks", methods=["DELETE"])
+@jwt_required()
+def removeCourseMark(userSemesterID, userCourseID):
+    markDetails = request.get_json()
+
+    if not markDetails:
+        return json.dumps({"error" : "Invalid mark details supplied!"})
+
+    if "markID" not in markDetails:
+        return json.dumps({"error" : "Invalid mark details supplied!"})
+
+    foundMark = db.session.query(Mark).filter_by(markID=markDetails["markID"]).first()
+
+    if not foundMark:
+        return json.dumps({"error" : "Mark not found!"})
+
+    foundCourseQuery = foundMark.userCourse.query.filter_by(userCourseID = userCourseID).first()
+
+    foundSemester = foundCourseQuery.semester.query.filter_by(userID = current_user.userID, userSemesterID = foundCourseQuery.userSemesterID).first()
+
+    if not foundSemester:
+        return json.dumps({"error" : "Mark for course not found for this semester!"})
+    
+    outcome = foundCourseQuery.removeMark(markID = markDetails["markID"])
+
+    if outcome:
+        return json.dumps({"message" : "Successfully removed mark from course!"})
+
+    return json.dumps({"error" : "Unable to remove mark from course!"})
+
+
+@app.route("/api/semesters/<userSemesterID>/courses/<userCourseID>/marks", methods=["PUT"])
+@jwt_required()
+def updateCourseMark(userSemesterID, userCourseID):
+    markDetails = request.get_json()
+
+    if not markDetails:
+        return json.dumps({"error" : "Invalid mark details supplied!"})
+
+    if "markID" not in markDetails:
+        return json.dumps({"error" : "Invalid mark details supplied!"})
+
+    foundMark = db.session.query(Mark).filter_by(markID=markDetails["markID"]).first()
+
+    if not foundMark:
+        return json.dumps({"error" : "Mark not found!"})
+
+    foundCourseQuery = foundMark.userCourse.query.filter_by(userCourseID = userCourseID).first()
+
+    foundSemester = foundCourseQuery.semester.query.filter_by(userID = current_user.userID, userSemesterID = foundCourseQuery.userSemesterID).first()
+
+    if not foundSemester:
+        return json.dumps({"error" : "Mark for course not found for this semester!"})
+
+    component = None
+    totalMark = None
+    receivedMark = None
+    weighting = None
+
+    if "component" in markDetails:
+        component = markDetails["component"]
+
+    if "totalMark" in markDetails:
+        if int(markDetails["totalMark"]) < 0 or int(markDetails["totalMark"]) > 100:
+            return json.dumps({"error" : "Invalid total mark entered!"})
+
+        totalMark = markDetails["totalMark"]
+    
+    if "receivedMark" in markDetails:
+        if int(markDetails["receivedMark"]) < 0 or int(markDetails["receivedMark"]) > 100:
+            return json.dumps({"error" : "Invalid received mark entered!"})
+            
+        receivedMark = markDetails["receivedMark"]
+
+    if "weighting" in markDetails:
+        if int(markDetails["weighting"]) < 0 or int(markDetails["weighting"]) > 100:
+            return json.dumps({"error" : "Invalid weighting entered!"})
+            
+        weighting = markDetails["weighting"]
+
+
+    outcome = foundCourseQuery.updateMark(markID=markDetails["markID"], component=component, totalMark=totalMark, weighting=weighting, receivedMark=receivedMark)
+    
+    if outcome:
+        return json.dumps({"message" : "Successfully updated mark in course!"})
+
+    return json.dumps({"error" : "Unable to update mark in course!"})
 
 @app.route("/profile/university", methods=["PUT"])
 @jwt_required()

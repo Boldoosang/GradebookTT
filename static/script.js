@@ -409,8 +409,7 @@ async function getSemesterCourses(semesterID){
                 checkedStatus = "checked"
                 isTowardsGPA = "<span class='text-success'>Towards GPA</span>"
             }
-      
-            console.log(userCourseDataEntry)
+
             courseEntries += `<li class=" list-group-item card w-100 mb-3">
                                     <div class="card-body">
                                         <h5 class="card-title">${userCourseDataEntry.courseCode}</h5>
@@ -425,8 +424,6 @@ async function getSemesterCourses(semesterID){
                                             <button type="button" onclick="leaveCourse(${userCourseDataEntry.userCourseID}, ${semesterID})" class="btn btn-danger">Remove Course</button>
                                             <button class="btn btn-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#removeCourse-${userCourseDataEntry.userCourseID}">Cancel</button>
                                         </div>
-
-                                       
 
                                         <div class="collapse rounded" id="updateCourse-${userCourseDataEntry.userCourseID}">
                                             <form class="mt-3 p-4 bg-dark text-white rounded" onsubmit="updateCourse(event, ${userCourseDataEntry.userCourseID}, ${semesterID})">
@@ -495,8 +492,6 @@ async function updateCourse(event, userCourseID, semesterID){
         "credits" : form.elements["credits"].value,
         "towardsSemesterGPA" : form.elements["towardsSemesterGPA"].checked,
     }
-
-    console.log(updateDetails)
 
     let result = await sendRequest(`/api/semesters/${semesterID}/courses`, "PUT", updateDetails);
 
@@ -687,19 +682,94 @@ async function marksGetCourses(event){
     
 }
 
-async function loadMarksDashboardListing(courseMarks, userSemesterID, userCourseID){
+async function loadMarksDashboardListing(userSemesterID, userCourseID){
     let markDashboardArea = document.querySelector("#marksBody")
+
+    let courseMarks
+
+    let semesterCourses = await sendRequest(`/api/semesters/${userSemesterID}/courses`, "GET");
 
     completeMarkListHTML = ""
 
     try {
+        for(semesterCourse of semesterCourses){
+            if(semesterCourse.userCourseID == userCourseID && semesterCourse.userSemesterID == userSemesterID)
+                courseMarks = semesterCourse.marks
+        }
         if(courseMarks.length > 0){
             for(courseMark of courseMarks){
-                completeMarkListHTML += `<div class="card w-100">
+                console.log(courseMark)
+                let status = ""
+                let receivedMark = "-";
+                let weightedMark = "Enter Mark for Weighted Mark";
+                let percentageMark = "Enter Mark for Percentage Mark";
+                let percentageMarkFormatting = "text-muted"
+                if (courseMark.receivedMark != null)
+                    receivedMark = courseMark.receivedMark
+                if (courseMark.weightedMark != null){
+                    percentageMark = parseFloat(courseMark.weightedMark)/parseFloat(courseMark.weighting) * 100
+                    weightedMark = courseMark.weightedMark.toFixed(2)
+
+                    if(percentageMark >= 50){
+                        status = ` - Passed with ${weightedMark} %`
+                        percentageMark = percentageMark.toFixed(2)
+                        percentageMarkFormatting = "text-success"
+                    } else {
+                        status = ` - Failed with ${weightedMark} %`
+                        percentageMark = percentageMark.toFixed(2)
+                        percentageMarkFormatting = "text-danger"
+                    }
+                }
+                completeMarkListHTML += `<div class="card w-100 mb-3">
                                             <div class="card-body text-dark">
                                                 <h5 class="card-title">${courseMark.component}</h5>
-                                                <h6 class="card-subtitle mb-2 text-muted">Yes</h6>
-                                                <p class="card-text">Placeholder</p>
+                                                <h6 class="card-subtitle mb-2 text-muted">Weighting - ${parseFloat(courseMark.weighting).toFixed(2)} %<span class="${percentageMarkFormatting}">${status}</span></h6>
+
+                                                <div class="w-100 text-center mb-2 fw-bold card-text">${courseMark.receivedMark == null ? "?" : courseMark.receivedMark} / ${courseMark.totalMark} marks</div>
+                                                <div class="w-100 text-center mb-3 fw-bold card-text"><h6 class="card-subtitle ${percentageMarkFormatting}">${percentageMark} %</h6></div>
+
+
+                                                <button class="btn btn-danger" type="button" data-bs-toggle="collapse" data-bs-target="#removeMark-${courseMark.markID}">Remove Mark</button>
+                                                <button class="btn btn-primary" type="button" data-bs-toggle="collapse" data-bs-target="#updateMark-${courseMark.markID}">Update Mark</button>
+
+                                                <div class="collapse mt-3 p-4 bg-dark text-white rounded" id="removeMark-${courseMark.markID}">
+                                                    <p>Are you sure you want to remove this mark?</p>
+                                                    <div class="mb-1" id="removeMarkMessage-${courseMark.markID}"></div><br>
+                                                    <button type="button" onclick="removeMark(${courseMark.markID}, ${userCourseID}, ${userSemesterID})" class="btn btn-danger">Remove Mark</button>
+                                                    <button class="btn btn-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#removeMark-${courseMark.markID}">Cancel</button>
+                                                </div>
+
+                                                <div class="collapse rounded" id="updateMark-${courseMark.markID}">
+                                                    <form class="mt-3 p-4 bg-dark text-white rounded" onsubmit="updateMark(event, ${courseMark.markID}, ${userCourseID}, ${userSemesterID})">
+                                                        <div class="form-group mb-3">
+                                                            <label for="updateMark-componentName-${courseMark.markID}">Component Name</label>
+                                                            <input type="text" class="mt-1 form-control" name="component" id="updateMark-componentName-${courseMark.markID}" value="${courseMark.component}" required>
+                                                        </div>
+
+                                                        <div class="row">
+                                                            <div class="col form-group mb-3">
+                                                                <label for="updateMark-receivedMark-${courseMark.markID}">Received Mark</label>
+                                                                <input type="number" class="mt-1 form-control" name="receivedMark" id="updateMark-receivedMark-${courseMark.markID}" value="${courseMark.receivedMark}">
+                                                            </div>
+                                                            
+                                                            <div class="col form-group mb-3">
+                                                                <label for="updateMark-totalMark-${courseMark.markID}">Total Mark</label>
+                                                                <input type="number" class="mt-1 form-control" name="totalMark" id="updateMark-totalMark-${courseMark.markID}" value="${courseMark.totalMark}">
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="form-group mb-3">
+                                                            <label class="mb-1" for="updateMark-weighting-${courseMark.markID}">Weighting</label>
+                                                            <div class="input-group mb-3">
+                                                                <input type="number" class="form-control" name="weighting" id="updateMark-weighting-${courseMark.markID}" value="${courseMark.weighting}">
+                                                                <span class="input-group-text">%</span>
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="mb-1" id="updateMarkMessage-${courseMark.markID}"></div><br>
+                                                        <button type="submit" class="btn btn-primary">Update Mark</button>
+                                                    </form>
+                                                </div>
                                             </div>
                                         </div>`
             }
@@ -712,7 +782,7 @@ async function loadMarksDashboardListing(courseMarks, userSemesterID, userCourse
         }
 
     } catch(e){
-        
+        console.log(e)
         completeMarkListHTML = `<div class="bg-dark">
 									<p class="amx-0 py-2 bg-dark text-center text-white border border-secondary" id="courseMarkList-noMarks">
 										No marks for this course! Add a mark to this course before continuing.
@@ -768,7 +838,76 @@ async function loadMarksDashboardListing(courseMarks, userSemesterID, userCourse
 }
 
 async function addMark(event, userSemesterID, userCourseID){
-    let test
+    event.preventDefault()
+
+    let form = event.target
+
+    let markDetails = {
+        "component" : form.elements["component"].value,
+        "totalMark" : form.elements["totalMark"].value == "" ? null : form.elements["totalMark"].value,
+        "receivedMark" : form.elements["receivedMark"].value == "" ? null : form.elements["receivedMark"].value,
+        "weighting" : form.elements["weighting"].value
+    }
+
+    let result = await sendRequest(`/api/semesters/${userSemesterID}/courses/${userCourseID}/marks`, "POST", markDetails);
+    let messageArea = document.querySelector(`#addMarkMessage`)
+
+    if("error" in result || "msg" in result){
+        messageArea.innerHTML = `<b class="text-danger text-center">${result["error"]}</b>`
+    } else {
+        messageArea.innerHTML = `<div class="align-middle">
+                                    <div class="spinner-border text-success" role="status"></div>
+                                    <b class="text-success text-center">Mark added successfully!</b>
+                                </div>`
+        setTimeout(() => loadMarksDashboardListing(userSemesterID, userCourseID), 3000);
+    }
+}
+
+async function removeMark(markID, userSemesterID, userCourseID){
+    let markDetails = {
+        "markID" : markID,
+    }
+
+    let result = await sendRequest(`/api/semesters/${userSemesterID}/courses/${userCourseID}/marks`, "DELETE", markDetails);
+    let messageArea = document.querySelector(`#removeMarkMessage-${markID}`)
+
+    if("error" in result || "msg" in result){
+        messageArea.innerHTML = `<b class="text-danger text-center">${result["error"]}</b>`
+    } else {
+        messageArea.innerHTML = `<div class="align-middle">
+                                    <div class="spinner-border text-success" role="status"></div>
+                                    <b class="text-success text-center">Mark removed successfully!</b>
+                                </div>`
+        setTimeout(() => loadMarksDashboardListing(userSemesterID, userCourseID), 3000);
+    }
+}
+
+
+async function updateMark(event, markID, userSemesterID, userCourseID){
+    event.preventDefault();
+
+    let form = event.target
+
+    let updateDetails = {
+        "markID" : markID,
+        "component" : form.elements["component"].value,
+        "totalMark" : form.elements["totalMark"].value == "" ? null : form.elements["totalMark"].value,
+        "receivedMark" : form.elements["receivedMark"].value == "" ? null : form.elements["receivedMark"].value,
+        "weighting" : form.elements["weighting"].value
+    }
+
+    let result = await sendRequest(`/api/semesters/${userSemesterID}/courses/${userCourseID}/marks`, "PUT", updateDetails);
+    let messageArea = document.querySelector(`#updateMarkMessage-${markID}`)
+
+    if("error" in result || "msg" in result){
+        messageArea.innerHTML = `<b class="text-danger text-center">${result["error"]}</b>`
+    } else {
+        messageArea.innerHTML = `<div class="align-middle">
+                                    <div class="spinner-border text-success" role="status"></div>
+                                    <b class="text-success text-center">Mark updated successfully!</b>
+                                </div>`
+        setTimeout(() => loadMarksDashboardListing(userSemesterID, userCourseID), 3000);
+    }
 }
 
 async function loadMarksDashboard(event, userSemesterID){
@@ -792,7 +931,7 @@ async function loadMarksDashboard(event, userSemesterID){
             if(courseMarks == null)
                 markDashboardArea.innerHTML = `<b class="text-danger text-center">Course not found in your courses!</b>`
             else {
-                loadMarksDashboardListing(courseMarks, userSemesterID, selectedCourseID)
+                loadMarksDashboardListing(userSemesterID, selectedCourseID)
             }
 
         } catch (e) {
