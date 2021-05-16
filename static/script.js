@@ -805,14 +805,14 @@ async function loadMarksDashboardListing(userSemesterID, userCourseID){
                                                             
                                                             <div class="col form-group mb-3">
                                                                 <label for="updateMark-totalMark-${courseMark.markID}">Total Mark</label>
-                                                                <input type="number" class="mt-1 form-control" name="totalMark" id="updateMark-totalMark-${courseMark.markID}" value="${courseMark.totalMark}">
+                                                                <input type="number" class="mt-1 form-control" name="totalMark" id="updateMark-totalMark-${courseMark.markID}" value="${courseMark.totalMark}" step="any"">
                                                             </div>
                                                         </div>
 
                                                         <div class="form-group mb-3">
                                                             <label class="mb-1" for="updateMark-weighting-${courseMark.markID}">Weighting</label>
                                                             <div class="input-group mb-3">
-                                                                <input type="number" class="form-control" name="weighting" id="updateMark-weighting-${courseMark.markID}" value="${courseMark.weighting}">
+                                                                <input type="number" class="form-control" name="weighting" id="updateMark-weighting-${courseMark.markID}" value="${courseMark.weighting}" step="any">
                                                                 <span class="input-group-text">%</span>
                                                             </div>
                                                         </div>
@@ -866,14 +866,14 @@ async function loadMarksDashboardListing(userSemesterID, userCourseID){
                                                         
                                                         <div class="col form-group mb-3">
                                                             <label for="addMark-totalMark">Total Mark</label>
-                                                            <input type="number" class="mt-1 form-control" name="totalMark" id="addMark-totalMark" placeholder="eg: 100">
+                                                            <input type="number" class="mt-1 form-control" name="totalMark" id="addMark-totalMark" placeholder="eg: 100" step="any">
                                                         </div>
                                                     </div>
 
                                                     <div class="form-group mb-3">
                                                         <label class="mb-1" for="addMark-weighting">Weighting</label>
                                                         <div class="input-group mb-3">
-                                                            <input type="number" class="form-control" name="weighting" id="addMark-weighting" placeholder="eg: 15">
+                                                            <input type="number" class="form-control" name="weighting" id="addMark-weighting" placeholder="eg: 15" step="any">
                                                             <span class="input-group-text">%</span>
                                                         </div>
                                                     </div>
@@ -1113,9 +1113,11 @@ async function calculateCourseMark(courseMarks){
     try {
         for(courseMark of courseMarks){
             if(courseMark.receivedMark != null && courseMark.totalMark != null){
+                console.log(courseMark.receivedMark/courseMark.totalMark * courseMark.weighting)
                 totalMark += (parseFloat(courseMark.receivedMark) / parseFloat(courseMark.totalMark)).toFixed(2) * parseFloat(courseMark.weighting).toFixed(2)
             }
         }
+        console.log(totalMark)
         return Math.ceil(totalMark.toFixed(2))
     } catch(e) {
         console.log(e)
