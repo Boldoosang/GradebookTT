@@ -9,7 +9,6 @@ from models import *
 
 @manager.command
 def initDB():
-    os.remove("gradebookTT.db")
     db.create_all(app=app)
     UWI = University(universityName="University of the West Indies", universityLogo=None)
     db.session.add(UWI)

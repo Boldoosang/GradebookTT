@@ -127,7 +127,7 @@ def favicon():
 def logo():
     return app.send_static_file('images/logo.png')
 
-@app.route("/web", methods=["GET"])
+@app.route("/", methods=["GET"])
 def homepage():
     return app.send_static_file("index.html")
 

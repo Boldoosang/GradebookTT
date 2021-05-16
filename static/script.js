@@ -28,7 +28,7 @@ async function sendRequest(url, method, data){
             if(results["msg"] == "Signature verification failed" || results["msg"] == "Token has expired"){
                 window.localStorage.removeItem('access_token');
                 console.log("Session has expired!")
-                window.location = "/web"
+                window.location = "/"
                 return;
             }
         }
@@ -61,7 +61,7 @@ async function login(event){
     } else {
         window.localStorage.setItem("access_token", result["access_token"]);
         messageArea.innerHTML = `<b class="text-success text-center">Login successful!</b>`
-        window.location = "/web"
+        window.location = "/"
     }
 }
 
@@ -76,7 +76,7 @@ function logout(){
     
     identifyUserContext()
 
-    window.location = `/web`
+    window.location = `/`
 }
 
 async function identifyUser(){
