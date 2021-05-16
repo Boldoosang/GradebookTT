@@ -9,7 +9,7 @@ from models import db, User, UserSemester, UserCourse, University, Mark
 def create_app():
     app = Flask(__name__)
     try:
-        app.config.from_object('config.dev')
+        app.config.from_object('config.prod')
     except:
         app.config['ENV'] = os.environ.get("ENV", default="")
         app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("DBURI")
