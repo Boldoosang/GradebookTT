@@ -24,6 +24,15 @@ async function sendRequest(url, method, data){
         let response = await fetch(url, request);
         let results = await response.json()
 
+        if("msg" in results){
+            if(results["msg"] == "Signature verification failed" || results["msg"] == "Token has expired"){
+                window.localStorage.removeItem('access_token');
+                console.log("Session has expired!")
+                window.location = "/web"
+                return;
+            }
+        }
+
         return results;
     } catch (e){
         console.log(e)
@@ -553,7 +562,7 @@ async function myCoursesDashboard(){
     let userSemesters = await sendRequest("/api/semesters", "GET")
     let myCoursesDashboardArea = document.querySelector("#dashboard-courses")
 
-    completeSemesterListAccordion = ""
+    let completeSemesterListAccordion = ""
 
     try {
         userSemesters = userSemesters.sort((a, b) => {
@@ -650,6 +659,20 @@ async function myMarksDashboard(){
     let isDisabled = ""
 
     try {
+        userSemesters = userSemesters.sort((a, b) => {
+            if (a.semesterYear < b.semesterYear)
+                return 1;
+
+            if(a.semesterYear == b.semesterYear){
+                if (a.semesterTerm < b.semesterTerm)
+                    return 1;
+                else
+                    return -1;
+            }
+                
+            if (a.semesterYear > b.semesterYear)
+                return -1;
+        })
         for(userSemester of userSemesters){
             completeSemesterList += `<option value="${userSemester.userSemesterID}">${userSemester.semesterYear}, ${userSemester.semesterTerm}</option>`
         }
@@ -690,8 +713,9 @@ async function marksGetCourses(event){
     let isDisabled = ""
 
     try {
+        semesterCourses = semesterCourses.sort((a, b) => (a.courseCode > b.courseCode ? 1 : -1))
         for(semesterCourse of semesterCourses){
-            completeSemesterCourseList += `<option data-marks="${semesterCourse.marks}" value="${semesterCourse.userCourseID}">${semesterCourse.courseCode} - ${semesterCourse.courseName}</option>`
+            completeSemesterCourseList += `<option class="font-monospace" data-marks="${semesterCourse.marks}" value="${semesterCourse.userCourseID}">${semesterCourse.courseCode} - ${semesterCourse.courseName}</option>`
         }
     } catch(e){
         completeSemesterCourseList = `<option selected disabled>No added courses!</option>`
@@ -890,10 +914,12 @@ async function addMark(event, userSemesterID, userCourseID){
     }
 }
 
-async function removeMark(markID, userSemesterID, userCourseID){
+async function removeMark(markID, userCourseID, userSemesterID){
     let markDetails = {
         "markID" : markID,
     }
+
+    console.log(markDetails)
 
     let result = await sendRequest(`/api/semesters/${userSemesterID}/courses/${userCourseID}/marks`, "DELETE", markDetails);
     let messageArea = document.querySelector(`#removeMarkMessage-${markID}`)
@@ -909,8 +935,7 @@ async function removeMark(markID, userSemesterID, userCourseID){
     }
 }
 
-
-async function updateMark(event, markID, userSemesterID, userCourseID){
+async function updateMark(event, markID, userCourseID, userSemesterID){
     event.preventDefault();
 
     let form = event.target
@@ -1034,8 +1059,272 @@ async function unenrollSemester(event){
     }
 }
 
+async function updateGPA(semesterCourses, userSemesterID){
+    let user = await identifyUser();
+    console.log(user)
+    
+    let GPAArea = document.querySelector(`#semester-${userSemesterID}-GPA`)
+    let gradeLetterArea = document.querySelector(`#semester-${userSemesterID}-gradeArea`)
+
+    if("error" in user){
+        console.log(user["error"])
+        GPAArea.innerHTML = `-`
+        return;
+    } else {
+        //CALCULATE COURSE GPA using semesterCourses, accomodate empty marks.
+        let courseFinalMark = 0
+        let courseFinalLetterGrade = "-"
+        let weightedQualityPoints = 0
+        let totalCreditHours = 0
+        let finalGPA = "-"
+        let gradeAreaHTML = ""
+        
+        try {
+            for(semesterCourse of semesterCourses){
+                let modifier = 0
+                courseFinalMark = await calculateCourseMark(semesterCourse.marks)
+                courseFinalLetterGrade = calculateLetterGrade(courseFinalMark)
+                let qualityPoints = calculateQualityPoints(courseFinalLetterGrade)
+                if(semesterCourse.towardsSemesterGPA){
+                    totalCreditHours += semesterCourse.credits
+                    modifier = 1
+                    gradeAreaHTML += `<div class="col text-center mb-0">
+                                        <h2 class="${(courseFinalMark >= 50) ? "text-success": "text-danger"} fw-bold fs-1 mb-0">${courseFinalLetterGrade}</h2>
+                                  </div>`
+                }
+                weightedQualityPoints += qualityPoints * semesterCourse.credits * modifier
+            }
+            gradeLetterArea.innerHTML = gradeAreaHTML;
+
+            finalGPA = parseFloat(weightedQualityPoints)/parseFloat(totalCreditHours)
+        } catch(e){
+            finalGPA = "-"
+        }
+
+        //console.log(semesterCourses)
+        GPAArea.innerHTML = `${finalGPA.toFixed(2)}`
+        //Calculate GPA based on ranges of marks
+    }
+}
+
+async function calculateCourseMark(courseMarks){
+    console.log(courseMarks)
+    let totalMark = 0
+    try {
+        for(courseMark of courseMarks){
+            if(courseMark.receivedMark != null && courseMark.totalMark != null){
+                totalMark += (parseFloat(courseMark.receivedMark) / parseFloat(courseMark.totalMark)).toFixed(2) * parseFloat(courseMark.weighting).toFixed(2)
+            }
+        }
+        return Math.ceil(totalMark.toFixed(2))
+    } catch(e) {
+        console.log(e)
+        return null;
+    }
+
+    return null;
+}
+
+function calculateQualityPoints(letterGrade){
+    console.log(letterGrade)
+    if(letterGrade == "A+")
+        return 4.3
+    else if(letterGrade == "A")
+        return 4.0
+    else if(letterGrade == "A-")
+        return 3.7
+    else if(letterGrade == "B+")
+        return 3.3
+    else if(letterGrade == "B")
+        return 3.0
+    else if(letterGrade == "B-")
+        return 2.7
+    else if(letterGrade == "C+")
+        return 2.3
+    else if(letterGrade == "C")
+        return 2.0
+    else if(letterGrade == "F1")
+        return 1.7
+    else if(letterGrade == "F2")
+        return 1.3
+    else
+        return 0.0
+}
+
+function calculateLetterGrade(coursemark){
+    if(coursemark >= 90)
+        return "A+"
+    else if(coursemark >= 80)
+        return "A"
+    else if(coursemark >= 75)
+        return "A-"
+    else if(coursemark >= 70)
+        return "B+"
+    else if(coursemark >= 65)
+        return "B"
+    else if(coursemark >= 60)
+        return "B-"
+    else if(coursemark >= 55)
+        return "C+"
+    else if(coursemark >= 50)
+        return "C"
+    else if(coursemark >= 45)
+        return "F1"
+    else if(coursemark >= 40)
+        return "F2"
+    else if(coursemark >= 0)
+        return "F3"
+}
+
 async function loadSemesterGradeDetails(userSemesterID){
-    console.log(userSemesterID)
+    let semesterTab = document.querySelector(`#grades-semester-${userSemesterID}`)
+    let semesterCourses = await sendRequest(`/api/semesters/${userSemesterID}/courses`, "GET");
+
+    let completeCourseListAccordion = ""
+    try {
+
+        if("error" in semesterCourses || "msg" in semesterCourses){
+            semesterTab.innerHTML = `<div class="text-center text-white">
+                                        <h2>Unable to load semester grades!</h2>
+                                        <p>${semesterCourses["error"]}</p>
+                                    </div>`
+            return;
+        }
+
+        semesterCourses = semesterCourses.sort((a, b) => (a.courseCode > b.courseCode ? 1 : -1))
+
+        for(semesterCourse of semesterCourses){
+            courseMarks = semesterCourse.marks
+
+            let gradeExpandedBody = "";
+            let formattedGradeBody = "";
+            let calculatedCourseMarkParsed = "-"
+            let letterGrade = "-"
+
+            if(courseMarks.length > 0){
+                let calculatedCourseMark = await calculateCourseMark(courseMarks);
+                for(courseMark of courseMarks){
+                    let receivedMark = "-";
+                    let weightedMark = "-";
+                    let percentageMark = "-";
+                    let weighting = "-"
+                    let totalMark = "-";
+                    let tableRowFormatting = "text-muted"
+                    
+                    
+
+                    if(calculatedCourseMark != null){
+                        calculatedCourseMarkParsed = parseFloat(calculatedCourseMark).toFixed(0)
+                        letterGrade = calculateLetterGrade(calculatedCourseMarkParsed)
+                    }
+
+                    console.log(letterGrade)
+
+                    if (courseMark.weighting != null)
+                        weighting = courseMark.weighting;
+
+                    if (courseMark.receivedMark != null)
+                        receivedMark = courseMark.receivedMark
+                    
+                    if (courseMark.totalMark != null)
+                        totalMark = courseMark.totalMark
+
+                    if (courseMark.weightedMark != null && courseMark.weighting != null && parseFloat(courseMark.weighting) != 0){
+                        percentageMark = parseFloat(courseMark.weightedMark)/parseFloat(courseMark.weighting) * 100
+                        weightedMark = courseMark.weightedMark.toFixed(2)
+        
+                        if(percentageMark >= 50){
+                            percentageMark = percentageMark.toFixed(2)
+                            tableRowFormatting = "text-success"
+                        } else {
+                            percentageMark = percentageMark.toFixed(2)
+                            tableRowFormatting = "text-danger"
+                        }
+                    }
+
+                    gradeExpandedBody += `<tr>
+                                                <th scope="row"><span class="${tableRowFormatting}">${courseMark.component}</span></th>
+                                                <td><span class="${tableRowFormatting}">${receivedMark}</span></td>
+                                                <td><span class="${tableRowFormatting}">${totalMark}</span></td>
+                                                <td><span class="${tableRowFormatting}">${(percentageMark == '-') ? percentageMark: percentageMark + " %"}</span></td>
+                                                <td><span class="${tableRowFormatting}">${(weightedMark == '-') ? weightedMark: weightedMark + " %"} / ${weighting} %</span></td>
+                                            </tr>`
+
+                    
+                }
+
+                formattedGradeBody = `<div class="table-responsive">
+                                        <table class="w-100 table table-hover table-sm table-dark text-center">
+                                            <thead>
+                                                <tr>
+                                                    <th scope="col">Component</th>
+                                                    <th scope="col">Mark</th>
+                                                    <th scope="col">Total</th>
+                                                    <th scope="col">%</th>
+                                                    <th scope="col">W %</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                ${gradeExpandedBody}
+                                            </tbody>
+                                            <tfoot>
+                                                <tr class="border-white border-bottom">
+                                                    <th scope="row">Total</th>
+                                                    <td></td>
+                                                    <td></td>
+                                                    <td></td>
+                                                    <th scope="row">${calculatedCourseMarkParsed} %</td>
+                                                </tr>
+                                            </tfoot>
+                                        </table>
+                                    </div>
+                                    <div class="text-center">
+                                        <h2 class="${(calculatedCourseMarkParsed >= 50) ? "text-success": "text-danger"} fw-bold fs-1 mb-3">${letterGrade}</h2>
+                                        <hr class="my-2 text-white border-bottom border-white" style="opacity : 1">
+                                    </div>`
+            } else {
+                formattedGradeBody = `<div class="bg-dark mb-0">
+                                        <p class="mx-0 py-2 bg-dark text-center text-white border border-secondary" id="courseMarkList-noMarks">
+                                            No marks for this course! Add a mark to this course before continuing.
+                                        </p>
+                                    </div>`
+            }
+
+            
+
+
+            completeCourseListAccordion += `<div class="accordion-item bg-dark">
+                                                <h2 class="accordion-header" id="grades-courseList-${semesterCourse.userCourseID}-header">
+                                                    <button class="accordion-button font-monospace text-dark collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#grades-courseList-${semesterCourse.userCourseID}">
+                                                        ${semesterCourse.courseCode} - ${semesterCourse.courseName}
+                                                    </button>
+                                                </h2>
+
+                                                <div id="grades-courseList-${semesterCourse.userCourseID}" class="accordion-collapse collapse" data-bs-parent="#grades-courses">
+                                                    <div id="gradeDetails-${semesterCourse.userCourseID}" class="accordion-body collapsed bg-dark text-white border-end border-bottom border-start border-secondary">
+                                                        ${formattedGradeBody}
+                                                    </div>
+                                                </div>
+                                            </div>`
+            
+        }
+
+        semesterTab.innerHTML = `<div class="jumbotron bg-dark border border-secondary rounded py-5 mb-3">
+                                    <h1 class="display-4 text-center fw-bold"><span id="semester-${userSemesterID}-GPA"></span> GPA</h1>
+                                    <div class="row mt-4" id="semester-${userSemesterID}-gradeArea"></div>
+                                </div>
+                                
+                                <div class="accordion bg-dark" id="grades-courses">${completeCourseListAccordion}</div>`
+
+        updateGPA(semesterCourses, userSemesterID);
+
+    } catch(e) {
+        console.log(e)
+        semesterTab.innerHTML = `<div class="text-center text-white">
+                                    <h2>Unable to load semester!</h2>
+                                    <p>An error has occured that prevents the loading of the semester.<br></p>
+                                </div>`
+    }
 }
 
 
@@ -1049,9 +1338,9 @@ async function gradeHandler(){
                                         <p>${user["error"]}</p>
                                     </div>`
     } else {
-        let semesterCourses = await sendRequest(`/api/semesters`, "GET");
+        let semesterList = await sendRequest(`/api/semesters`, "GET");
 
-        if("error" in semesterCourses){
+        if("error" in semesterList){
             courseGradeArea.innerHTML = `<div class="text-center text-white">
                                             <h2>User is not enrolled in any semesters!</h2>
                                             <p>${user["error"]}</p>
@@ -1060,7 +1349,7 @@ async function gradeHandler(){
             let gradeSemesterMenuButtons = "";
             let gradeSemesterTabs = "";
 
-            semesterCourses = semesterCourses.sort((a, b) => {
+            semesterList = semesterList.sort((a, b) => {
                 if (a.semesterYear < b.semesterYear)
                     return 1;
     
@@ -1075,10 +1364,9 @@ async function gradeHandler(){
                     return -1;
             })
 
-            for(semesterCourse of semesterCourses){
-                console.log(semesterCourse)
-                gradeSemesterMenuButtons += `<button class="nav-link border-bottom border-primary rounded-0" onclick="loadSemesterGradeDetails(${semesterCourse.userSemesterID})" id="grades-semester-${semesterCourse.userSemesterID}-tab" data-bs-toggle="pill" data-bs-target="#grades-semester-${semesterCourse.userSemesterID}" type="button" role="tab">${semesterCourse.semesterYear}, ${semesterCourse.semesterTerm}</button>`
-                gradeSemesterTabs += `<div class="tab-pane fade ps-3" id="grades-semester-${semesterCourse.userSemesterID}" role="tabpanel"></div>`
+            for(semester of semesterList){
+                gradeSemesterMenuButtons += `<button class="nav-link border-bottom border-primary rounded-0" onclick="loadSemesterGradeDetails(${semester.userSemesterID})" id="grades-semester-${semester.userSemesterID}-tab" data-bs-toggle="pill" data-bs-target="#grades-semester-${semester.userSemesterID}" type="button" role="tab">${semester.semesterYear}, ${semester.semesterTerm}</button>`
+                gradeSemesterTabs += `<div class="tab-pane fade ps-3" id="grades-semester-${semester.userSemesterID}" role="tabpanel"></div>`
             }
             courseGradeArea.innerHTML = `<div class="d-flex align-items-start row">
                                             

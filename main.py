@@ -278,9 +278,15 @@ def updateCourse(userSemesterID):
     towardsSemesterGPA = True
 
     if "courseCode" in courseDetails:
+        if len(courseDetails["courseCode"].strip()) <= 3:
+            return json.dumps({"error" : "Invalid course code supplied!"})
+
         courseCode = courseDetails["courseCode"]
 
     if "courseName" in courseDetails:
+        if len(courseDetails["courseName"].strip()) <= 3:
+            return json.dumps({"error" : "Invalid course name supplied!"})
+
         courseName = courseDetails["courseName"]
     
     if "credits" in courseDetails:
@@ -337,6 +343,9 @@ def addCourseMark(userSemesterID, userCourseID):
     if "component" not in markDetails or "weighting" not in markDetails:
         return json.dumps({"error" : "Invalid mark details supplied!"})
 
+    if len(markDetails["component"].strip()) <= 3:
+        return json.dumps({"error" : "Invalid component name supplied!"})
+
     totalMark = None
     receivedMark = None
 
@@ -389,6 +398,7 @@ def removeCourseMark(userSemesterID, userCourseID):
     if not foundSemester:
         return json.dumps({"error" : "Mark for course not found for this semester!"})
     
+    print(markDetails)
     outcome = foundCourseQuery.removeMark(markID = markDetails["markID"])
 
     if outcome:
@@ -428,27 +438,42 @@ def updateCourseMark(userSemesterID, userCourseID):
     if "component" in markDetails:
         component = markDetails["component"]
 
-    if "totalMark" in markDetails:
-        if float(markDetails["totalMark"]) < 0 or float(markDetails["totalMark"]) > 100:
-            return json.dumps({"error" : "Invalid total mark entered!"})
+        if len(markDetails["component"].strip()) <= 3:
+            return json.dumps({"error" : "Invalid component name supplied!"})
 
-        totalMark = markDetails["totalMark"]
+    if "totalMark" in markDetails:
+        if markDetails["totalMark"]:
+            if float(markDetails["totalMark"]) < 0 or float(markDetails["totalMark"]) > 100:
+                return json.dumps({"error" : "Invalid total mark entered!"})
+
+            totalMark = markDetails["totalMark"]
+        else:
+            return json.dumps({"error" : "Invalid total mark entered!"})
     
     if "receivedMark" in markDetails:
-        if float(markDetails["receivedMark"]) < 0 or float(markDetails["receivedMark"]) > 100:
-            return json.dumps({"error" : "Invalid received mark entered!"})
-            
-        receivedMark = markDetails["receivedMark"]
+        if markDetails["receivedMark"]:
+            try:
+                if float(markDetails["receivedMark"]) < 0 or float(markDetails["receivedMark"]) > 100:
+                    return json.dumps({"error" : "Invalid received mark entered!"})
+                
+                receivedMark = markDetails["receivedMark"]
+            except:
+                receivedMark = None
+        else:
+            receivedMark = None
 
     if "weighting" in markDetails:
-        if float(markDetails["weighting"]) < 0 or float(markDetails["weighting"]) > 100:
-            return json.dumps({"error" : "Invalid weighting entered!"})
+        if markDetails["weighting"]:
+            if float(markDetails["weighting"]) < 0 or float(markDetails["weighting"]) > 100:
+                return json.dumps({"error" : "Invalid weighting entered!"})
             
-        weighting = markDetails["weighting"]
+            weighting = markDetails["weighting"]
+        else:
+            return json.dumps({"error" : "Invalid weighting entered!"})
 
 
     outcome = foundCourseQuery.updateMark(markID=markDetails["markID"], component=component, totalMark=totalMark, weighting=weighting, receivedMark=receivedMark)
-    
+
     if outcome:
         return json.dumps({"message" : "Successfully updated mark in course!"})
 

@@ -219,8 +219,10 @@ class UserCourse(db.Model):
             return 0
 
     def updateMark(self, markID, component = None, totalMark = None, weighting = None, receivedMark=None):
+        print(markID)
+        print(self.userCourseID)
         foundMark = self.marks.filter_by(userCourseID=self.userCourseID, markID=markID).first()
-            
+        print(foundMark)
         if not foundMark:
             print("No mark found!")
             return False
@@ -235,8 +237,7 @@ class UserCourse(db.Model):
             if weighting:
                 foundMark.weighting = weighting
             
-            if receivedMark:
-                foundMark.receivedMark = receivedMark
+            foundMark.receivedMark = receivedMark
 
             db.session.add(foundMark)
             db.session.commit()
