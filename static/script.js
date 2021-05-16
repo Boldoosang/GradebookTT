@@ -910,7 +910,7 @@ async function addMark(event, userSemesterID, userCourseID){
                                     <div class="spinner-border text-success" role="status"></div>
                                     <b class="text-success text-center">Mark added successfully!</b>
                                 </div>`
-        setTimeout(() => loadMarksDashboardListing(userSemesterID, userCourseID), 3000);
+        loadMarksDashboardListing(userSemesterID, userCourseID)
     }
 }
 
@@ -931,7 +931,7 @@ async function removeMark(markID, userCourseID, userSemesterID){
                                     <div class="spinner-border text-success" role="status"></div>
                                     <b class="text-success text-center">Mark removed successfully!</b>
                                 </div>`
-        setTimeout(() => loadMarksDashboardListing(userSemesterID, userCourseID), 3000);
+        loadMarksDashboardListing(userSemesterID, userCourseID)
     }
 }
 
@@ -958,7 +958,7 @@ async function updateMark(event, markID, userCourseID, userSemesterID){
                                     <div class="spinner-border text-success" role="status"></div>
                                     <b class="text-success text-center">Mark updated successfully!</b>
                                 </div>`
-        setTimeout(() => loadMarksDashboardListing(userSemesterID, userCourseID), 3000);
+        loadMarksDashboardListing(userSemesterID, userCourseID)
     }
 }
 

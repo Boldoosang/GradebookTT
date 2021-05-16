@@ -291,7 +291,7 @@ class UserCourse(db.Model):
               
 class Mark(db.Model):
     markID = db.Column(db.Integer, primary_key=True)
-    userCourseID = db.Column(db.String(16), db.ForeignKey("user_course.userCourseID"), nullable = False)
+    userCourseID = db.Column(db.Integer, db.ForeignKey("user_course.userCourseID"), nullable = False)
     component = db.Column(db.String(64), nullable = False)
     receivedMark = db.Column(db.Float, nullable = True)
     totalMark = db.Column(db.Float, nullable = True)
