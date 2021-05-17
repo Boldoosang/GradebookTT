@@ -1259,7 +1259,7 @@ async function loadSemesterGradeDetails(userSemesterID){
                                         <table class="w-100 table table-hover table-sm table-dark text-center">
                                             <thead>
                                                 <tr>
-                                                    <th style="min-width: 150px" scope="col">Component</th>
+                                                    <th style="min-width: 200px" scope="col">Component</th>
                                                     <th style="min-width: 50px" scope="col">Mark</th>
                                                     <th style="min-width: 50px" scope="col">Total</th>
                                                     <th style="min-width: 75px" scope="col">%</th>
