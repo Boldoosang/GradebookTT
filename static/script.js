@@ -152,12 +152,13 @@ async function profileHandler(){
     } else {
         profileContent.innerHTML = `
                                     <div class="d-flex align-items-start row">
-                                        <div class="nav flex-column nav-pills col-md-3 mb-3 border border-primary rounded p-0" id="v-pills-tab" role="tablist">
+                                        <div class="nav flex-column nav-pills col-md-3 border border-primary rounded p-0" id="v-pills-tab" role="tablist">
                                             <button class="nav-link active border-bottom border-primary rounded-0" id="profile-home-tab" data-bs-toggle="pill" data-bs-target="#profile-home" type="button" role="tab">Home</button>
                                             <button class="nav-link border-bottom border-primary rounded-0" id="profile-password-tab" data-bs-toggle="pill" data-bs-target="#profile-password" type="button" role="tab">Password</button>
                                             <button class="nav-link" id="profile-university-tab" data-bs-toggle="pill" data-bs-target="#profile-university" type="button" role="tab">University</button>
                                         </div>
-                                        <div class="tab-content col-md-9 ps-3 mb-3" id="v-pills-tabContent">
+                                        <div class="tab-content col-md-9 ps-md-3 p-0 mb-3" id="v-pills-tabContent">
+                                            <hr class="my-4 d-xs-block d-md-none">
                                             <div class="tab-pane fade ps-3 show active" id="profile-home" role="tabpanel">
                                                 <h1>My Profile</h1>
                                                 <hr class="my-3">
@@ -282,12 +283,13 @@ async function dashboardHandler(){
                                     </div>`
     } else {
         dashboardContent.innerHTML = `<div class="d-flex align-items-start row">
-                                        <div class="nav flex-column nav-pills col-md-3 mb-3 border border-primary rounded p-0" id="v-pills-tab" role="tablist">
+                                        <div class="nav flex-column nav-pills col-md-3 border border-primary rounded p-0" id="v-pills-tab" role="tablist">
                                             <button class="nav-link border-bottom border-primary rounded-0" id="dashboard-semesters-tab" data-bs-toggle="pill" data-bs-target="#dashboard-semesters" type="button" role="tab">My Semesters</button>
                                             <button class="nav-link border-bottom border-primary rounded-0" id="dashboard-courses-tab" data-bs-toggle="pill" data-bs-target="#dashboard-courses" type="button" role="tab">My Courses</button>
                                             <button class="nav-link" id="dashboard-marks-tab" data-bs-toggle="pill" data-bs-target="#dashboard-marks" type="button" role="tab">My Marks</button>
                                         </div>
-                                        <div class="tab-content col-md-9 ps-3" id="v-pills-tabContent">
+                                        <div class="tab-content col-md-9 ps-md-3 p-0" id="v-pills-tabContent">
+                                            <hr class="my-4 d-xs-block d-md-none">
                                             <div class="tab-pane fade show active" id="defaultDashboardPage" role="tabpanel">
                                                 <div class="text-center text-white">
                                                     <h2>Please select an option!</h2>
@@ -1311,7 +1313,7 @@ async function loadSemesterGradeDetails(userSemesterID){
             
         }
 
-        semesterTab.innerHTML = `<div class="jumbotron bg-dark border border-secondary rounded py-5 mb-3">
+        semesterTab.innerHTML = `<div class="jumbotron bg-dark border border-secondary rounded py-5 mx-0 px-0 mb-3">
                                     <h1 class="display-4 text-center fw-bold"><span id="semester-${userSemesterID}-GPA"></span> GPA</h1>
                                     <div class="row mt-4" id="semester-${userSemesterID}-gradeArea"></div>
                                 </div>
@@ -1368,15 +1370,19 @@ async function gradeHandler(){
 
             for(semester of semesterList){
                 gradeSemesterMenuButtons += `<button class="nav-link border-bottom border-primary rounded-0" onclick="loadSemesterGradeDetails(${semester.userSemesterID})" id="grades-semester-${semester.userSemesterID}-tab" data-bs-toggle="pill" data-bs-target="#grades-semester-${semester.userSemesterID}" type="button" role="tab">${semester.semesterYear}, ${semester.semesterTerm}</button>`
-                gradeSemesterTabs += `<div class="tab-pane fade ps-3" id="grades-semester-${semester.userSemesterID}" role="tabpanel"></div>`
+                gradeSemesterTabs += `<div class="tab-pane fade px-sm-0 mx-sm-0 mx-md-3" id="grades-semester-${semester.userSemesterID}" role="tabpanel"></div>`
             }
             courseGradeArea.innerHTML = `<div class="d-flex align-items-start row">
                                             
-                                            <div class="nav flex-column nav-pills col-md-3 mb-3 border border-primary border-bottom-0 rounded p-0" id="v-pills-gradeTab" role="tablist">
-                                                ${gradeSemesterMenuButtons}
+                                            <div class="nav flex-column nav-pills col-md-3 border border-primary border-bottom-0 rounded p-0" id="v-pills-gradeTab" role="tablist">
+                                                ${gradeSemesterMenuButtons}                                                
                                             </div>
 
-                                            <div class="tab-content col-md-9 ps-3" id="v-pills-gradeTabContent">
+                                            
+
+                                            <div class="tab-content col-md-9 ps-md-3 p-0" id="v-pills-gradeTabContent">
+                                                <hr class="my-4 d-xs-block d-md-none">
+
                                                 <div class="tab-pane fade show active" id="defaultGradePage" role="tabpanel">
                                                     <div class="text-center text-white">
                                                         <h2>Please select a semester!</h2>
