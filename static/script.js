@@ -1259,11 +1259,11 @@ async function loadSemesterGradeDetails(userSemesterID){
                                         <table class="w-100 table table-hover table-sm table-dark text-center">
                                             <thead>
                                                 <tr>
-                                                    <th scope="col">Component</th>
-                                                    <th scope="col">Mark</th>
-                                                    <th scope="col">Total</th>
-                                                    <th scope="col">%</th>
-                                                    <th scope="col">W %</th>
+                                                    <th style="min-width: 150px" scope="col">Component</th>
+                                                    <th style="min-width: 50px" scope="col">Mark</th>
+                                                    <th style="min-width: 50px" scope="col">Total</th>
+                                                    <th style="min-width: 75px" scope="col">%</th>
+                                                    <th style="min-width: 150px" scope="col">W %</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -1345,7 +1345,7 @@ async function gradeHandler(){
         if("error" in semesterList){
             courseGradeArea.innerHTML = `<div class="text-center text-white">
                                             <h2>User is not enrolled in any semesters!</h2>
-                                            <p>${user["error"]}</p>
+                                            <p>${semesterList["error"]}</p>
                                         </div>`
         } else {
             let gradeSemesterMenuButtons = "";
