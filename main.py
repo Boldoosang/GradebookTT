@@ -3,11 +3,13 @@ from flask_jwt_extended import create_access_token, get_jwt_identity, jwt_requir
 from sqlalchemy.exc import IntegrityError, OperationalError
 import os
 import json
+from datetime import timedelta 
 
 from models import db, User, UserSemester, UserCourse, University, Mark
 
 def create_app():
     app = Flask(__name__)
+    app.config['JWT_EXPIRATION_DELTA'] = timedelta(days = 7)
     try:
         app.config.from_object('config.dev')
     except:
