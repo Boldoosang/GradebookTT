@@ -445,7 +445,7 @@ def updateCourseMark(userSemesterID, userCourseID):
 
     if "totalMark" in markDetails:
         if markDetails["totalMark"]:
-            if float(markDetails["totalMark"]) < 0 or float(markDetails["totalMark"]) > 100:
+            if float(markDetails["totalMark"]) < 0:
                 return json.dumps({"error" : "Invalid total mark entered!"})
 
             totalMark = markDetails["totalMark"]
@@ -455,7 +455,7 @@ def updateCourseMark(userSemesterID, userCourseID):
     if "receivedMark" in markDetails:
         if markDetails["receivedMark"]:
             try:
-                if float(markDetails["receivedMark"]) < 0 or float(markDetails["receivedMark"]) > 100:
+                if float(markDetails["receivedMark"]) <= 0:
                     return json.dumps({"error" : "Invalid received mark entered!"})
                 
                 receivedMark = markDetails["receivedMark"]
