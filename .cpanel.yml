@@ -1,5 +1,5 @@
 ---
 deployment:
   tasks:
-    - export DEPLOYPATH=/home/boldoosang/web_apps/gradebooktt
+    - export DEPLOYPATH=/home/boldoosang/gradebooktt
     - /bin/cp -R ./ $DEPLOYPATH
