@@ -12,7 +12,9 @@ def create_app():
     app.config['JWT_EXPIRATION_DELTA'] = timedelta(days = 7)
     try:
         app.config.from_object('config.dev')
+        print("Configured from development file!")
     except:
+        print("Configured from environment variables!")
         app.config['ENV'] = os.environ.get("ENV", default="")
         app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("DBURI")
         app.config["JWT_SECRET_KEY"] = os.environ.get("JWT_SECRET_KEY")
